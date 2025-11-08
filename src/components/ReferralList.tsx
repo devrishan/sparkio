@@ -37,13 +37,13 @@ export const ReferralList = ({ referrals }: ReferralListProps) => {
   };
 
   return (
-    <Card className="border-border bg-card p-6">
-      <h3 className="mb-4 text-lg font-semibold text-foreground">Recent Referrals</h3>
+    <Card className="border-border bg-card p-4 sm:p-6">
+      <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-foreground">Recent Referrals</h3>
       
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {referrals.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="py-6 sm:py-8 text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               No referrals yet — your first spark is waiting.
             </p>
           </div>
@@ -55,23 +55,26 @@ export const ReferralList = ({ referrals }: ReferralListProps) => {
             return (
               <div
                 key={referral.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3 transition-all hover:border-primary/30"
+                className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 p-2.5 sm:p-3 transition-all hover:border-primary/30"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`rounded-full ${config.bg} p-2`}>
-                    <StatusIcon className={`h-4 w-4 ${config.color}`} />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className={`rounded-full ${config.bg} p-1.5 sm:p-2 flex-shrink-0`}>
+                    <StatusIcon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{referral.name}</p>
-                    <p className="text-xs text-muted-foreground">{referral.date}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm sm:text-base text-foreground truncate">{referral.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{referral.date}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold text-primary">+₹{referral.amount}</span>
-                  <Badge variant="outline" className={config.bg}>
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                  <span className="font-semibold text-sm sm:text-base text-primary">+₹{referral.amount}</span>
+                  <Badge variant="outline" className={`${config.bg} text-[10px] sm:text-xs hidden sm:inline-flex`}>
                     {config.label}
                   </Badge>
+                  <div className={`sm:hidden rounded-full ${config.bg} p-1`}>
+                    <StatusIcon className={`h-3 w-3 ${config.color}`} />
+                  </div>
                 </div>
               </div>
             );

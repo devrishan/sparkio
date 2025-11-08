@@ -76,18 +76,21 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+        <div className="container mx-auto flex items-center justify-between gap-2 px-4 py-3 sm:py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary/20 p-2 glow-sm">
-              <Zap className="h-6 w-6 text-primary" />
+            <div className="rounded-lg bg-primary/20 p-1.5 sm:p-2 glow-sm">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Sparkio</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Sparkio</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2">
-              <Gift className="h-4 w-4 text-primary animate-pulse-glow" />
-              <span className="text-sm font-medium text-foreground">3 Active Referrals</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-primary/30 bg-primary/5 px-2 sm:px-4 py-1.5 sm:py-2">
+              <Gift className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary animate-pulse-glow" />
+              <span className="text-xs sm:text-sm font-medium text-foreground">
+                <span className="hidden sm:inline">3 Active Referrals</span>
+                <span className="sm:hidden">3 Active</span>
+              </span>
             </div>
             <ThemeToggle />
           </div>
@@ -95,19 +98,19 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="mb-2 text-3xl font-bold text-foreground">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">
             Welcome back, Champ! 🔥
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Every tap is a win. Keep that energy flowing.
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Left Column - Main Actions */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-4 sm:space-y-6 lg:col-span-2">
             {loading ? (
               <>
                 <WalletSkeleton />
@@ -124,7 +127,7 @@ const Index = () => {
                 <WalletCard balance={balance} onWithdraw={handleWithdraw} />
 
                 {/* Stats Grid */}
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 sm:gap-4">
                   <StatsCard
                     title="Total Earned"
                     value={`₹${balance}`}
@@ -139,13 +142,15 @@ const Index = () => {
                     icon={Users}
                     trend="neutral"
                   />
-                  <StatsCard
-                    title="Success Rate"
-                    value="75%"
-                    subtitle="3 of 4 verified"
-                    icon={Zap}
-                    trend="up"
-                  />
+                  <div className="col-span-2 sm:col-span-1">
+                    <StatsCard
+                      title="Success Rate"
+                      value="75%"
+                      subtitle="3 of 4 verified"
+                      icon={Zap}
+                      trend="up"
+                    />
+                  </div>
                 </div>
 
                 {/* Upload Button */}
@@ -173,8 +178,8 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-border bg-card/50 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+      <footer className="mt-12 sm:mt-16 border-t border-border bg-card/50 py-6 sm:py-8">
+        <div className="container mx-auto px-4 text-center text-xs sm:text-sm text-muted-foreground">
           <p>Powered by trust. Energized by you.</p>
         </div>
       </footer>
