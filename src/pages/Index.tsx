@@ -1,15 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, TrendingUp, Zap, Gift } from "lucide-react";
 import { WalletCard } from "@/components/WalletCard";
 import { StatsCard } from "@/components/StatsCard";
 import { ReferralList } from "@/components/ReferralList";
 import { Leaderboard } from "@/components/Leaderboard";
 import { UploadProofDialog } from "@/components/UploadProofDialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  WalletSkeleton,
+  StatsCardSkeleton,
+  ReferralListSkeleton,
+  LeaderboardSkeleton,
+} from "@/components/LoadingSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { toast } = useToast();
   const [balance] = useState(145);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const mockReferrals = [
     {
@@ -68,9 +84,12 @@ const Index = () => {
             </div>
             <h1 className="text-2xl font-bold text-foreground">Sparkio</h1>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2">
-            <Gift className="h-4 w-4 text-primary animate-pulse-glow" />
-            <span className="text-sm font-medium text-foreground">3 Active Referrals</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2">
+              <Gift className="h-4 w-4 text-primary animate-pulse-glow" />
+              <span className="text-sm font-medium text-foreground">3 Active Referrals</span>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -89,47 +108,65 @@ const Index = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Main Actions */}
           <div className="space-y-6 lg:col-span-2">
-            {/* Wallet Card */}
-            <WalletCard balance={balance} onWithdraw={handleWithdraw} />
+            {loading ? (
+              <>
+                <WalletSkeleton />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <StatsCardSkeleton />
+                  <StatsCardSkeleton />
+                  <StatsCardSkeleton />
+                </div>
+                <ReferralListSkeleton />
+              </>
+            ) : (
+              <>
+                {/* Wallet Card */}
+                <WalletCard balance={balance} onWithdraw={handleWithdraw} />
 
-            {/* Stats Grid */}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <StatsCard
-                title="Total Earned"
-                value={`₹${balance}`}
-                subtitle="+₹50 this week"
-                icon={TrendingUp}
-                trend="up"
-              />
-              <StatsCard
-                title="Referrals"
-                value={3}
-                subtitle="1 pending"
-                icon={Users}
-                trend="neutral"
-              />
-              <StatsCard
-                title="Success Rate"
-                value="75%"
-                subtitle="3 of 4 verified"
-                icon={Zap}
-                trend="up"
-              />
-            </div>
+                {/* Stats Grid */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <StatsCard
+                    title="Total Earned"
+                    value={`₹${balance}`}
+                    subtitle="+₹50 this week"
+                    icon={TrendingUp}
+                    trend="up"
+                  />
+                  <StatsCard
+                    title="Referrals"
+                    value={3}
+                    subtitle="1 pending"
+                    icon={Users}
+                    trend="neutral"
+                  />
+                  <StatsCard
+                    title="Success Rate"
+                    value="75%"
+                    subtitle="3 of 4 verified"
+                    icon={Zap}
+                    trend="up"
+                  />
+                </div>
 
-            {/* Upload Button */}
-            <div className="animate-float">
-              <UploadProofDialog />
-            </div>
+                {/* Upload Button */}
+                <div className="animate-float">
+                  <UploadProofDialog />
+                </div>
 
-            {/* Referral List */}
-            <ReferralList referrals={mockReferrals} />
+                {/* Referral List */}
+                <ReferralList referrals={mockReferrals} />
+              </>
+            )}
           </div>
 
           {/* Right Column - Leaderboard */}
           <div className="lg:col-span-1">
             <div className="sticky top-6">
-              <Leaderboard entries={mockLeaderboard} currentUserRank={3} />
+              {loading ? (
+                <LeaderboardSkeleton />
+              ) : (
+                <Leaderboard entries={mockLeaderboard} currentUserRank={3} />
+              )}
             </div>
           </div>
         </div>
