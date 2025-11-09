@@ -1,28 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
+import { LayoutDashboard, Megaphone, ShieldCheck, UserCheck, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import type { NavigationItem, NavigationIcon } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 
-export interface SidebarItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-}
+const iconMap: Record<NavigationIcon, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  referrals: UserCheck,
+  withdraw: Wallet,
+  ads: Megaphone,
+  security: ShieldCheck,
+};
 
-export function Sidebar({ items }: { items: SidebarItem[] }) {
+export function Sidebar({ items }: { items: NavigationItem[] }) {
   const pathname = usePathname();
 
   return (
     <nav className="space-y-1">
-      {items.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon }) => {
+        const Icon = iconMap[icon];
         const isActive = pathname?.startsWith(href);
         return (
           <Link
             key={href}
-            href={href}
+            href={href as Route}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/60",

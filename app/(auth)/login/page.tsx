@@ -2,6 +2,7 @@
 
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +15,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { SparkioLogo } from "@/components/shared/logo";
-import { env } from "@/lib/env";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email."),
@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async (values: LoginFormValues) => {
-      const response = await fetch(`${env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login.php`, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -56,7 +56,7 @@ export default function LoginPage() {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Welcome back!", { description: "You are now signed in." });
       const destination = user.role === "admin" ? "/admin/dashboard" : redirectPath;
-      router.replace(destination as any);
+      router.replace(destination as Route);
     },
     onError: (error: Error) => {
       toast.error("Login failed", { description: error.message });
