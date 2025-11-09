@@ -32,23 +32,23 @@ declare namespace __next_route_internal_types__ {
     | `/`
     | `/login`
     | `/register`
+    | `/admin/ads`
+    | `/admin/dashboard`
+    | `/admin/referrals`
+    | `/admin/security`
+    | `/admin/withdrawals`
     | `/member/dashboard`
     | `/member/referrals`
     | `/member/withdraw`
-    | `/admin/ads`
-    | `/admin/dashboard`
-    | `/admin/security`
-    | `/admin/withdrawals`
-    | `/admin/referrals`
+    | `/api/admin/ads/create`
     | `/api/admin/ads/delete`
     | `/api/admin/ads/update`
-    | `/api/admin/ads/create`
     | `/api/admin/referrals/update`
     | `/api/admin/withdrawals/process`
     | `/api/auth/login`
     | `/api/auth/logout`
-    | `/api/auth/session`
     | `/api/auth/register`
+    | `/api/auth/session`
     | `/api/member/withdraw`
   type DynamicRoutes<T extends string = string> = never
 

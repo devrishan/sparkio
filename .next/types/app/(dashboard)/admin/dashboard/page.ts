@@ -1,4 +1,4 @@
-// File: E:\xampp\htdocs\sparkio\app\(dashboard)\admin\dashboard\page.tsx
+// File: /Applications/XAMPP/xamppfiles/htdocs/sparkio/sparkio/app/(dashboard)/admin/dashboard/page.tsx
 import * as entry from '../../../../../../app/(dashboard)/admin/dashboard/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

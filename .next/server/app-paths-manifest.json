@@ -1,6 +1,12 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
+  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/admin/ads/create/route": "app/api/admin/ads/create/route.js",
   "/(dashboard)/admin/dashboard/page": "app/(dashboard)/admin/dashboard/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js"
+  "/(dashboard)/admin/referrals/page": "app/(dashboard)/admin/referrals/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(dashboard)/admin/ads/page": "app/(dashboard)/admin/ads/page.js",
+  "/(dashboard)/admin/withdrawals/page": "app/(dashboard)/admin/withdrawals/page.js",
+  "/(dashboard)/admin/security/page": "app/(dashboard)/admin/security/page.js"
 }

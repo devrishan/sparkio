@@ -3,7 +3,7 @@ USE sparkio;
 -- Seed Admin User
 INSERT INTO users (username, email, password_hash, role, referral_code, referred_by)
 VALUES
-  ('admin', 'admin@sparkio.app', '$2y$10$KIX0jzvYJIUKbzEuKnhGHeJzi10BGSAdoo6gWQBaIjXImQxGc1d1C', 'admin', 'SPARKADMIN', NULL)
+  ('admin', 'admin@sparkio.app', '$2b$10$9ttn3lSvBz3GPY.CEXjvmuE8jB0mHDXwaMcSstdW6dKpv6YNZcX2u', 'admin', 'SPARKADMIN', NULL)
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
 -- Ensure admin wallet exists
