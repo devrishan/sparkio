@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Megaphone, ShieldCheck, UserCheck, Wallet } from "lucide-react";
+import { LayoutDashboard, Megaphone, ShieldCheck, UserCheck, UserCog, Users2, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { NavigationItem, NavigationIcon } from "@/config/navigation";
@@ -14,6 +14,8 @@ const iconMap: Record<NavigationIcon, LucideIcon> = {
   referrals: UserCheck,
   withdraw: Wallet,
   ads: Megaphone,
+  admins: UserCog,
+  members: Users2,
   security: ShieldCheck,
 };
 

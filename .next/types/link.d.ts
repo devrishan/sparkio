@@ -37,6 +37,8 @@ declare namespace __next_route_internal_types__ {
     | `/admin/referrals`
     | `/admin/security`
     | `/admin/withdrawals`
+    | `/admin/admins`
+    | `/admin/members`
     | `/member/dashboard`
     | `/member/referrals`
     | `/member/withdraw`

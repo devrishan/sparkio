@@ -1422,6 +1422,9 @@ video {
 .border-transparent {
   border-color: transparent;
 }
+.border-muted-foreground\/20 {
+  border-color: hsl(var(--muted-foreground) / 0.2);
+}
 .border-l-transparent {
   border-left-color: transparent;
 }

@@ -13,9 +13,8 @@ import { toast } from "@/components/ui/sonner";
 
 const schema = z.object({
   amount: z
-    .string()
+    .number()
     .min(1)
-    .transform((value) => parseFloat(value))
     .refine((value) => value > 0, "Enter a positive amount."),
   upi_id: z.string().min(5, "Enter a valid UPI ID."),
 });
@@ -32,7 +31,7 @@ export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      amount: "",
+      amount: 0.00,
       upi_id: "",
     },
   });

@@ -1,4 +1,4 @@
-export type NavigationIcon = "dashboard" | "referrals" | "withdraw" | "ads" | "security";
+export type NavigationIcon = "dashboard" | "referrals" | "withdraw" | "ads" | "admins" | "members" | "security";
 
 export type NavigationItem = {
   href: string;
@@ -17,6 +17,8 @@ export const adminNavigation: NavigationItem[] = [
   { href: "/admin/referrals", label: "Referrals", icon: "referrals" },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: "withdraw" },
   { href: "/admin/ads", label: "Ads", icon: "ads" },
+  { href: "/admin/admins", label: "Admins", icon: "admins" },
+  { href: "/admin/members", label: "Members", icon: "members" },
   { href: "/admin/security", label: "Security", icon: "security" },
 ];
 
