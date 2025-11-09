@@ -1,7 +1,14 @@
 {
-  "/(dashboard)/admin/members/page": "app/(dashboard)/admin/members/page.js",
-  "/(dashboard)/admin/referrals/page": "app/(dashboard)/admin/referrals/page.js",
+  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/api/member/withdraw/route": "app/api/member/withdraw/route.js",
+  "/(dashboard)/admin/withdrawals/page": "app/(dashboard)/admin/withdrawals/page.js",
+  "/(dashboard)/member/referrals/page": "app/(dashboard)/member/referrals/page.js",
+  "/(dashboard)/member/dashboard/page": "app/(dashboard)/member/dashboard/page.js",
+  "/(dashboard)/member/withdraw/page": "app/(dashboard)/member/withdraw/page.js",
   "/(dashboard)/admin/ads/page": "app/(dashboard)/admin/ads/page.js",
   "/(dashboard)/admin/admins/page": "app/(dashboard)/admin/admins/page.js",
-  "/(dashboard)/admin/withdrawals/page": "app/(dashboard)/admin/withdrawals/page.js"
+  "/(dashboard)/admin/security/page": "app/(dashboard)/admin/security/page.js",
+  "/(dashboard)/admin/referrals/page": "app/(dashboard)/admin/referrals/page.js",
+  "/(dashboard)/admin/dashboard/page": "app/(dashboard)/admin/dashboard/page.js",
+  "/(dashboard)/admin/members/page": "app/(dashboard)/admin/members/page.js"
 }

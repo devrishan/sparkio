@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,11 +12,21 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 
+const MAX_WITHDRAWAL_AMOUNT = 100;
+
 const schema = z.object({
-  amount: z
-    .number()
-    .min(1)
-    .refine((value) => value > 0, "Enter a positive amount."),
+  amount: z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined) {
+        return undefined;
+      }
+      return typeof value === "number" ? value : Number(value);
+    },
+    z
+      .number({ invalid_type_error: "Enter a valid amount." })
+      .min(1, "Minimum withdrawal is ₹1.")
+      .max(MAX_WITHDRAWAL_AMOUNT, `Maximum withdrawal is ₹${MAX_WITHDRAWAL_AMOUNT}.`),
+  ),
   upi_id: z.string().min(5, "Enter a valid UPI ID."),
 });
 
@@ -27,11 +38,12 @@ interface MemberWithdrawFormProps {
 
 export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
   const router = useRouter();
+  const maxAmount = balance > 0 ? Math.min(balance, MAX_WITHDRAWAL_AMOUNT) : MAX_WITHDRAWAL_AMOUNT;
 
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      amount: 0.00,
+      amount: 1,
       upi_id: "",
     },
   });
@@ -82,7 +94,17 @@ export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
               <FormItem>
                 <FormLabel>Amount (₹)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min={1} max={balance} placeholder="100.00" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={1}
+                    max={maxAmount}
+                    placeholder="100.00"
+                    value={field.value === undefined || Number.isNaN(field.value) ? "" : field.value}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      field.onChange(event.target.value === "" ? undefined : Number(event.target.value))
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
