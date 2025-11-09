@@ -1,73 +1,153 @@
-# Welcome to your Lovable project
+## Sparkio Referral Platform
 
-## Project info
+Sparkio is a two-sided referral and payout platform with dedicated experiences for members and administrators. The stack combines a stateless PHP REST API, a MySQL backend, and a modern Next.js (TypeScript) frontend styled with Tailwind and shadcn/ui components.
 
-**URL**: https://lovable.dev/projects/a9d6bd24-1ab6-43e2-8d4a-90e61274bfb7
+### Features
+- **Members**
+  - JWT authenticated dashboard with wallet metrics, referral analytics, and leaderboards.
+  - Full referral history with filtering and withdrawal requests to UPI accounts.
+- **Administrators**
+  - Global KPI dashboard covering users, payouts, and earnings.
+  - Referral review workflow with status updates and automatic wallet crediting.
+  - Withdrawal processing queue and ads inventory management.
+- **Security**
+  - JWT-based stateless auth, HttpOnly cookies, and Next.js middleware for route protection.
+  - Simple rate-limiting middleware guarding auth endpoints.
+  - Environment-driven CORS, secrets, and database configuration.
 
-## How can I edit this code?
+### Tech Stack
+- **Frontend:** Next.js 14 (App Router, TypeScript), Tailwind CSS, shadcn/ui, React Query.
+- **Backend:** PHP 8 (PDO, JWT utilities), modular REST endpoints.
+- **Database:** MySQL with InnoDB, utf8mb4 collation, referential integrity.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a9d6bd24-1ab6-43e2-8d4a-90e61274bfb7) and start prompting.
+### Prerequisites
+- Node.js ≥ 18
+- npm ≥ 9
+- PHP ≥ 8.1 with PDO extensions
+- MySQL ≥ 8.0
 
-Changes made via Lovable will be committed automatically to this repo.
+### 1. Install dependencies
+```bash
+npm install
+```
 
-**Use your preferred IDE**
+### 2. Configure environment variables
+Copy the provided template and adjust for your environment:
+```bash
+cp env.example .env
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Populate `.env` with values that match the way you are hosting the PHP API. For a default XAMPP setup (Apache serving the `sparkio` folder), use:
+```
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=sparkio
+DB_USERNAME=root
+DB_PASSWORD=
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+JWT_SECRET=replace-with-32-char-secret
 
-Follow these steps:
+FRONTEND_ORIGIN=http://localhost:3001
+NEXT_PUBLIC_API_BASE_URL=http://localhost/sparkio
+API_BASE_URL=http://localhost/sparkio
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+If you prefer PHP’s built-in server instead of Apache, set the API URLs to `http://localhost:8080` (or whichever host/port you bind to).
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+> The `.env` file is shared by both the PHP API and the Next.js frontend.
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 3. Prepare the database
+Create the database and tables:
+```bash
+mysql -u <user> -p -e "CREATE DATABASE sparkio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u <user> -p sparkio < sql/schema.sql
+mysql -u <user> -p sparkio < sql/seed.sql
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+The seed creates an initial admin user:
+- **Email:** `admin@sparkio.app`
+- **Password:** `Admin@123`
+
+### 4. Run the PHP API
+Serve the API directory with Apache/XAMPP (preferred for Windows) or PHP's built-in server.
+
+- **XAMPP/Apache:** ensure the document root has the project under `/sparkio` so that `http://localhost/sparkio/api/...` resolves.
+- **Built-in server (alternative):**
+  ```bash
+  php -S 0.0.0.0:8080 -t api
+  ```
+
+Ensure the URL you serve from matches the values in `.env` (`API_BASE_URL` & `NEXT_PUBLIC_API_BASE_URL`).
+
+### 5. Run the Next.js frontend
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Visit `http://localhost:3000` to access the app.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Project Structure
+```
+api/                 # PHP REST endpoints, middleware, and utilities
+app/                 # Next.js App Router pages (auth, member, admin)
+src/components/      # Shared React components & providers
+src/services/        # Server-side data fetchers
+sql/                 # Database schema and seed scripts
+middleware.ts        # Next.js route protection
+env.example          # Environment variable template
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## Testing & Linting
+- **Linting:** `npm run lint`
+- **Type checking:** handled automatically by Next.js during build.
 
-This project is built with:
+_Automated tests are not yet implemented; perform manual QA on key flows (auth, referrals, withdrawals) after changes._
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## Deployment Notes
+- Use HTTPS in production to protect JWT cookies (`NODE_ENV=production` enforces `secure` cookies).
+- Store secrets (database credentials, JWT secret) in a vault or environment manager.
+- Run the PHP API behind a hardened web server (nginx/Apache) and place it on the same private network as MySQL.
+- Consider queueing (e.g., RabbitMQ) for withdrawal processing if payouts become long-running.
+- Enable full-featured rate limiting (Redis, Cloudflare Turnstile, etc.) before going live.
 
-Simply open [Lovable](https://lovable.dev/projects/a9d6bd24-1ab6-43e2-8d4a-90e61274bfb7) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## API Overview
+Key endpoints (all JSON):
 
-Yes, you can!
+| Method | Endpoint                             | Description                          |
+|--------|--------------------------------------|--------------------------------------|
+| POST   | `/api/auth/register.php`             | Register member (optional referral)  |
+| POST   | `/api/auth/login.php`                | Login and receive JWT                |
+| GET    | `/api/auth/me.php`                   | Fetch current user profile           |
+| GET    | `/api/member/dashboard.php`          | Member analytics & wallet            |
+| POST   | `/api/member/withdraw.php`           | Submit withdrawal request            |
+| GET    | `/api/admin/dashboard.php`           | Admin metrics overview               |
+| PUT    | `/api/admin/referrals/update.php`    | Approve / reject referral            |
+| PUT    | `/api/admin/withdrawals/process.php` | Process withdrawal                   |
+| GET    | `/api/public/ads.php`                | Public ad placements (filters)       |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+All protected routes require the `Authorization: Bearer <token>` header.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## Troubleshooting
+- **401/redirect loops:** Ensure the PHP API is running and `API_BASE_URL` matches the served address.
+- **CORS errors:** Confirm `FRONTEND_ORIGIN` aligns with the frontend URL.
+- **Rate limit (429):** Auth endpoints allow 10 login attempts/minute and 5 registrations per 5 minutes by IP.
+- **Empty dashboards:** Verify the database has referral data; seed or create users to populate stats.
+
+---
+
+Sparkio is designed for extendability—feel free to adapt the data model, swap UPI handling for alternative payment rails, or layer additional analytics as needed.
+

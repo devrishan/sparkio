@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, CheckCircle2 } from "lucide-react";
+import { Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ export const UploadProofDialog = () => {
       setUploading(false);
       setOpen(false);
       toast({
-        title: "Proof verified — you're on a roll.",
+        title: "Proof verified — you&apos;re on a roll.",
         description: "Your referral has been added and is being reviewed.",
       });
     }, 1500);
@@ -52,7 +52,7 @@ export const UploadProofDialog = () => {
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="name" className="text-sm text-foreground">
-              Referred Person's Name
+              Referred Person&apos;s Name
             </Label>
             <Input
               id="name"

@@ -1,13 +1,22 @@
+"use client";
+
 import { Wallet, ArrowUpRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 interface WalletCardProps {
   balance: number;
+  totalEarned?: number;
   onWithdraw: () => void;
 }
 
-export const WalletCard = ({ balance, onWithdraw }: WalletCardProps) => {
+const currency = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+});
+
+export const WalletCard = ({ balance, totalEarned = 0, onWithdraw }: WalletCardProps) => {
   const canWithdraw = balance >= 100;
 
   return (
@@ -26,13 +35,15 @@ export const WalletCard = ({ balance, onWithdraw }: WalletCardProps) => {
 
         <div>
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl sm:text-4xl font-bold text-foreground">₹{balance}</span>
-            <span className="text-base sm:text-lg text-muted-foreground">.00</span>
+            <span className="text-3xl sm:text-4xl font-bold text-foreground">{currency.format(balance)}</span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
             {canWithdraw 
               ? "Ready to withdraw! 🎉" 
-              : `₹${100 - balance} more to unlock withdrawal`}
+              : `${currency.format(100 - balance)} more to unlock withdrawal`}
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Lifetime earnings: <span className="font-semibold text-foreground">{currency.format(totalEarned)}</span>
           </p>
         </div>
 
