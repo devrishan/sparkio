@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import type { MemberReferral } from "@/services/member";
+import { maskPhone } from "@/lib/utils";
 
 const statusColor: Record<MemberReferral["status"], string> = {
   verified: "bg-success/10 text-success",
@@ -71,42 +72,51 @@ export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Commission</TableHead>
-            <TableHead className="text-right">Joined</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredReferrals.length === 0 ? (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
-                No referrals match your filters just yet.
-              </TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Phone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Commission</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">Joined</TableHead>
             </TableRow>
-          ) : (
-            filteredReferrals.map((referral) => (
-              <TableRow key={referral.id}>
-                <TableCell className="font-medium">{referral.username}</TableCell>
-                <TableCell className="text-muted-foreground">{referral.email}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={statusColor[referral.status]}>
-                    {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right font-medium">₹{referral.commission_amount.toFixed(2)}</TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {new Date(referral.created_at).toLocaleDateString()}
+          </TableHeader>
+          <TableBody>
+            {filteredReferrals.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                  No referrals match your filters just yet.
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              filteredReferrals.map((referral) => (
+                <TableRow key={referral.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{referral.username}</p>
+                      <p className="text-xs text-muted-foreground sm:hidden">{maskPhone(referral.email)}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground sm:table-cell">
+                    {maskPhone(referral.email)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={statusColor[referral.status]}>
+                      {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">₹{referral.commission_amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground hidden sm:table-cell">
+                    {new Date(referral.created_at).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </Card>
   );
 }

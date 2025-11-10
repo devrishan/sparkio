@@ -1,31 +1,64 @@
-import { MemberWithdrawForm } from "@/components/member/member-withdraw-form";
-import { Card } from "@/components/ui/card";
+import { WalletBalanceCard } from "@/components/member/wallet-balance-card";
+import { TransactionList } from "@/components/member/transaction-list";
+import { WithdrawWithQr } from "@/components/member/withdraw-with-qr";
 import { getMemberDashboard } from "@/services/member";
 
 export default async function MemberWithdrawPage() {
   const dashboard = await getMemberDashboard();
 
+  // Mock transaction data
+  const transactions = [
+    {
+      id: "1",
+      type: "credit" as const,
+      amount: 50,
+      status: "completed" as const,
+      description: "Referral Commission",
+      date: new Date("2025-01-05"),
+    },
+    {
+      id: "2",
+      type: "debit" as const,
+      amount: 100,
+      status: "pending" as const,
+      description: "UPI Withdrawal",
+      date: new Date("2025-01-10"),
+    },
+    {
+      id: "3",
+      type: "credit" as const,
+      amount: 25,
+      status: "completed" as const,
+      description: "Bonus Reward",
+      date: new Date("2025-01-08"),
+    },
+  ];
+
+  // Mock wallet data
+  const totalBalance = dashboard.wallet.total_earned;
+  const pendingBalance = 50;
+  const availableBalance = dashboard.wallet.balance;
+
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 sm:space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Withdraw Earnings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Wallet & Withdraw</h1>
         <p className="text-sm text-muted-foreground">
-          Request withdrawals to your preferred UPI account once your balance is ready.
+          Manage your earnings and request withdrawals
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <MemberWithdrawForm balance={dashboard.wallet.balance} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-4">
+          <WalletBalanceCard
+            totalBalance={totalBalance}
+            pendingBalance={pendingBalance}
+            availableBalance={availableBalance}
+          />
+          <WithdrawWithQr availableBalance={availableBalance} />
+        </div>
 
-        <Card className="h-fit border-border bg-card p-6 text-sm text-muted-foreground">
-          <h3 className="text-lg font-semibold text-foreground">Withdrawal Checklist</h3>
-          <ul className="mt-3 list-disc space-y-2 pl-5 marker:text-primary">
-            <li>Minimum withdrawal is ₹100 to maintain fair processing for all members.</li>
-            <li>Ensure the UPI ID belongs to you to avoid failed transactions.</li>
-            <li>Withdrawals are reviewed within 24 hours on business days.</li>
-            <li>Track the status in your withdrawal history after submitting.</li>
-          </ul>
-        </Card>
+        <TransactionList transactions={transactions} />
       </div>
     </section>
   );
