@@ -30,7 +30,7 @@ export function UserMenu({ username = "Member", role = "member", onLogout }: Use
       return;
     }
 
-    router.push("/login?redirect=" + encodeURIComponent(pathname ?? "/"));
+    router.push(("/login?redirect=" + encodeURIComponent(pathname ?? "/")) as any);
   };
 
   return (
@@ -50,7 +50,7 @@ export function UserMenu({ username = "Member", role = "member", onLogout }: Use
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="flex items-center gap-2">
+          <Link href={"/settings" as any} className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Settings
           </Link>
