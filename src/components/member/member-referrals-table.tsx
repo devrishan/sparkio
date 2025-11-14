@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import type { MemberReferral } from "@/services/member";
-import { maskPhone } from "@/lib/utils";
+import { maskPhoneWithName } from "@/lib/format";
 
 const statusColor: Record<MemberReferral["status"], string> = {
   verified: "bg-success/10 text-success",
@@ -95,12 +95,12 @@ export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[
                 <TableRow key={referral.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{referral.username}</p>
-                      <p className="text-xs text-muted-foreground sm:hidden">{maskPhone(referral.email)}</p>
+                      <p className="font-medium">{maskPhoneWithName(referral.username, referral.email)}</p>
+                      <p className="text-xs text-muted-foreground sm:hidden">Hidden for privacy</p>
                     </div>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground sm:table-cell">
-                    {maskPhone(referral.email)}
+                    Hidden for privacy
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={statusColor[referral.status]}>

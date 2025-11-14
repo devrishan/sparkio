@@ -8,6 +8,7 @@ export type NavigationItem = {
 
 export const memberNavigation: NavigationItem[] = [
   { href: "/member/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/member/tasks", label: "Tasks", icon: "dashboard" },
   { href: "/member/referrals", label: "Referrals", icon: "referrals" },
   { href: "/member/withdraw", label: "Withdraw", icon: "withdraw" },
 ];
