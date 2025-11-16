@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX idx_users_referral_code ON users (referral_code);
 
--- Referrals Table
+-- Referrals Table (direct parent-child links)
 CREATE TABLE IF NOT EXISTS referrals (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   referrer_id INT UNSIGNED NULL,
@@ -56,6 +56,30 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 CREATE INDEX idx_referrals_status ON referrals (status);
 CREATE INDEX idx_referrals_referrer ON referrals (referrer_id);
+CREATE UNIQUE INDEX uq_referrals_referred_user ON referrals (referred_user_id);
+
+-- Referral Closure Table for multi-level ancestry
+CREATE TABLE IF NOT EXISTS referral_closure (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ancestor_id INT UNSIGNED NOT NULL,
+  descendant_id INT UNSIGNED NOT NULL,
+  depth TINYINT UNSIGNED NOT NULL, -- 0 for self, 1 for L1, 2 for L2, etc.
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_referral_closure_ancestor FOREIGN KEY (ancestor_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_referral_closure_descendant FOREIGN KEY (descendant_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT uq_referral_closure_path UNIQUE (ancestor_id, descendant_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+CREATE INDEX idx_referral_closure_ancestor ON referral_closure (ancestor_id);
+CREATE INDEX idx_referral_closure_descendant ON referral_closure (descendant_id);
 
 -- Wallets Table
 CREATE TABLE IF NOT EXISTS wallets (
@@ -91,6 +115,66 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   COLLATE = utf8mb4_unicode_ci;
 
 CREATE INDEX idx_withdrawals_status ON withdrawals (status);
+
+-- Ranks Table
+CREATE TABLE IF NOT EXISTS ranks (
+  level INT UNSIGNED PRIMARY KEY, -- 1, 2, 3...
+  title VARCHAR(100) NOT NULL UNIQUE,
+  xp_required INT UNSIGNED NOT NULL UNIQUE,
+  bonus_coins DECIMAL(10,2) NOT NULL DEFAULT 0.00
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- User Gamification Stats
+CREATE TABLE IF NOT EXISTS user_gamification (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  current_xp INT UNSIGNED NOT NULL DEFAULT 0,
+  current_rank_level INT UNSIGNED NOT NULL DEFAULT 1,
+  current_streak INT UNSIGNED NOT NULL DEFAULT 0,
+  last_streak_at DATETIME NULL,
+  CONSTRAINT uq_user_gamification_user UNIQUE (user_id),
+  CONSTRAINT fk_user_gamification_user FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_user_gamification_rank FOREIGN KEY (current_rank_level)
+    REFERENCES ranks(level)
+    ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- Achievements Catalog
+CREATE TABLE IF NOT EXISTS achievements (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  icon_url VARCHAR(255) NOT NULL
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- User Achievements
+CREATE TABLE IF NOT EXISTS user_achievements (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  achievement_id INT UNSIGNED NOT NULL,
+  earned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_user_achievements_user FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_user_achievements_achievement FOREIGN KEY (achievement_id)
+    REFERENCES achievements(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT uq_user_achievement UNIQUE (user_id, achievement_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
 
 -- Ads Table
 CREATE TABLE IF NOT EXISTS ads (
