@@ -3,11 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 interface Referral {
-  id: string;
-  name: string;
-  amount: number;
+  id: number;
+  username: string;
+  email: string;
+  commission_amount: number;
   status: "verified" | "pending" | "rejected";
-  date: string;
+  created_at: string;
 }
 
 interface ReferralListProps {
@@ -43,9 +44,7 @@ export const ReferralList = ({ referrals }: ReferralListProps) => {
       <div className="space-y-2 sm:space-y-3">
         {referrals.length === 0 ? (
           <div className="py-6 sm:py-8 text-center">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              No referrals yet — your first spark is waiting.
-            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">No referrals yet — your first spark is waiting.</p>
           </div>
         ) : (
           referrals.map((referral) => {
@@ -62,13 +61,18 @@ export const ReferralList = ({ referrals }: ReferralListProps) => {
                     <StatusIcon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm sm:text-base text-foreground truncate">{referral.name}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{referral.date}</p>
+                    <p className="font-medium text-sm sm:text-base text-foreground truncate">{referral.username}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{referral.email}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {new Date(referral.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                  <span className="font-semibold text-sm sm:text-base text-primary">+₹{referral.amount}</span>
+                  <span className="font-semibold text-sm sm:text-base text-primary">
+                    +₹{referral.commission_amount.toFixed(2)}
+                  </span>
                   <Badge variant="outline" className={`${config.bg} text-[10px] sm:text-xs hidden sm:inline-flex`}>
                     {config.label}
                   </Badge>

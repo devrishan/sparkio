@@ -32,7 +32,7 @@ export const Leaderboard = ({ entries, currentUserRank }: LeaderboardProps) => {
         {currentUserRank && (
           <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
             <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">You're #{currentUserRank}</span>
+            <span className="hidden sm:inline">You&apos;re #{currentUserRank}</span>
             <span className="sm:hidden">#{currentUserRank}</span>
           </div>
         )}

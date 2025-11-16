@@ -1,0 +1,269 @@
+// Prisma schema for Earniq platform
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  VERIFIER
+  PAYOUT_MANAGER
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+}
+
+enum NotificationType {
+  TASK_APPROVED
+  TASK_REJECTED
+  WITHDRAWAL_UPDATE
+  REFERRAL_VERIFIED
+  RANK_UPGRADE
+  STREAK_WARNING
+}
+
+enum Rank {
+  NEWBIE
+  PRO
+  ELITE
+  MASTER
+}
+
+model User {
+  id              String    @id @default(cuid())
+  phone           String    @unique
+  email           String?   @unique
+  username        String?   @unique
+  role            Role      @default(USER)
+  // Auth-related
+  hashedPassword  String?   // optional backup password; primary auth is OTP
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Referral & hierarchy
+  referralCode    String    @unique
+  referredById    String?  
+  referredBy      User?     @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals       User[]    @relation("UserReferrals")
+
+  // Wallet & gamification
+  wallet          Wallet?
+  transactions    WalletTransaction[]
+  withdrawals     Withdrawal[]
+  gamification    GamificationState?
+
+  // Tasks
+  submissions     TaskSubmission[]
+
+  // Notifications & sessions
+  notifications   Notification[]
+  sessions        Session[]
+  otpRequests     OtpRequest[]
+
+  // Referrals & tree
+  referralEvents  Referral[]
+}
+
+model Session {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  refreshToken       String   @unique
+  createdAt          DateTime @default(now())
+  expiresAt          DateTime
+  userAgent          String?
+  ipAddress          String?
+  revokedAt          DateTime?
+  revokedReason      String?
+}
+
+model OtpRequest {
+  id          String   @id @default(cuid())
+  phone       String
+  codeHash    String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  verifiedAt  DateTime?
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+}
+
+model Wallet {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  balance        Decimal   @default(0.0)
+  pendingAmount  Decimal   @default(0.0)
+  withdrawable   Decimal   @default(0.0)
+  coins          Int       @default(0)
+  totalEarned    Decimal   @default(0.0)
+  updatedAt      DateTime  @updatedAt
+  transactions   WalletTransaction[]
+}
+
+model WalletTransaction {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id])
+  walletId       String
+  wallet         Wallet           @relation(fields: [walletId], references: [id])
+  amount         Decimal
+  type           String
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+}
+
+model Withdrawal {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  amount         Decimal
+  status         WithdrawalStatus  @default(PENDING)
+  upiId          String
+  upiQrUrl       String?
+  requestedAt    DateTime          @default(now())
+  processedAt    DateTime?
+  txId           String?
+  receiptUrl     String?
+  notes          String?
+}
+
+model TaskCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+}
+
+model Task {
+  id             String           @id @default(cuid())
+  title          String
+  slug           String           @unique
+  description    String
+  categoryId     String
+  category       TaskCategory     @relation(fields: [categoryId], references: [id])
+  rewardAmount   Decimal
+  rewardCoins    Int              @default(0)
+  difficulty     String
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  submissions    TaskSubmission[]
+}
+
+model TaskSubmission {
+  id             String            @id @default(cuid())
+  taskId         String
+  task           Task              @relation(fields: [taskId], references: [id])
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  status         SubmissionStatus  @default(SUBMITTED)
+  proofUrl       String
+  proofType      String?
+  notes          String?
+  reviewedById   String?
+  reviewedBy     User?             @relation("SubmissionReviewer", fields: [reviewedById], references: [id])
+  submittedAt    DateTime          @default(now())
+  reviewedAt     DateTime?
+  metadata       Json?
+}
+
+// Multi-level referral events (level 1/2/3, amounts, etc.)
+model Referral {
+  id               String   @id @default(cuid())
+  referrerId       String
+  referrer         User     @relation(fields: [referrerId], references: [id])
+  referredUserId   String
+  referredUser     User     @relation("ReferredUser", fields: [referredUserId], references: [id])
+  level            Int
+  commissionAmount Decimal  @default(0.0)
+  status           String   @default("pending")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  type         NotificationType
+  title        String
+  body         String
+  data         Json?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+}
+
+model GamificationState {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  xp             Int      @default(0)
+  rank           Rank     @default(NEWBIE)
+  streakDays     Int      @default(0)
+  lastLoginAt    DateTime?
+  badges         BadgeOnUser[]
+}
+
+model Badge {
+  id          String        @id @default(cuid())
+  code        String        @unique
+  name        String
+  description String
+  icon        String?
+  createdAt   DateTime      @default(now())
+  users       BadgeOnUser[]
+}
+
+model BadgeOnUser {
+  id             String            @id @default(cuid())
+  badgeId        String
+  badge          Badge             @relation(fields: [badgeId], references: [id])
+  gamificationId String
+  gamification   GamificationState @relation(fields: [gamificationId], references: [id])
+  earnedAt       DateTime          @default(now())
+}
+
+// Spark Wall events (for real-time feed)
+model SparkEvent {
+  id          String   @id @default(cuid())
+  type        String
+  message     String
+  data        Json?
+  createdAt   DateTime @default(now())
+}
+
+// Minimal audit logs, especially for payouts
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id])
+  action      String
+  entityId    String?
+  entityType  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+
