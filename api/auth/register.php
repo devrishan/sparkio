@@ -7,6 +7,8 @@ require_once __DIR__ . '/../bootstrap/database.php';
 require_once __DIR__ . '/../lib/response.php';
 require_once __DIR__ . '/../lib/validators.php';
 require_once __DIR__ . '/../lib/helpers.php';
+require_once __DIR__ . '/../lib/roles.php';
+require_once __DIR__ . '/../lib/gamification.php';
 require_once __DIR__ . '/../middleware/rate_limit.php';
 
 handle_cors();
@@ -79,7 +81,11 @@ try {
     ]);
 
     $userId = (int) $pdo->lastInsertId();
+    
+    // Initialize wallet, role, and stats
     initialize_wallet($pdo, $userId);
+    initialize_user_role($pdo, $userId);
+    initialize_user_stats($pdo, $userId);
 
     if ($referrerId) {
         $referralInsert = $pdo->prepare('
