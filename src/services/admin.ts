@@ -30,20 +30,15 @@ export interface AdminReferral {
 }
 
 export interface AdminWithdrawal {
-  id: string;
+  id: number;
   amount: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED";
+  status: "pending" | "processed" | "failed";
   upi_id: string;
-  upi_qr_url?: string | null;
   created_at: string;
   processed_at: string | null;
-  tx_id?: string | null;
-  receipt_url?: string | null;
-  notes?: string | null;
   user: {
-    username: string | null;
-    email: string | null;
-    phone: string;
+    username: string;
+    email: string;
   };
 }
 
@@ -53,6 +48,31 @@ export interface AdminAd {
   ad_placement_id: string;
   ad_code_snippet: string;
   is_active: boolean;
+}
+
+export interface AdminSubmission {
+  id: number;
+  status: "pending" | "approved" | "rejected" | "completed";
+  task_title: string;
+  task_description: string;
+  task_reward_coins: number;
+  task_reward_money: number;
+  task_reward_xp: number;
+  user_username: string;
+  user_email: string;
+  proof_text: string | null;
+  proof_link: string | null;
+  proof_notes: string | null;
+  proof_file_count: number;
+  user_product_name: string | null;
+  user_product_order_id: string | null;
+  rejection_reason: string | null;
+  rejection_notes: string | null;
+  coins_earned: number;
+  money_earned: number;
+  xp_earned: number;
+  submitted_at: string;
+  reviewed_at: string | null;
 }
 
 interface PaginationMeta {
@@ -98,10 +118,10 @@ export async function getAdminReferrals(
   }
 }
 
-export async function getAdminWithdrawals(status: string = "PENDING"): Promise<AdminWithdrawal[]> {
+export async function getAdminWithdrawals(status: string = "pending"): Promise<AdminWithdrawal[]> {
   try {
     const data = await serverFetch<{ success: boolean; withdrawals: AdminWithdrawal[] }>(
-      `/api/admin/withdrawals?status=${encodeURIComponent(status)}`,
+      `/api/admin/withdrawals.php?status=${encodeURIComponent(status)}`,
     );
     if (!data.success) {
       redirect("/login");
@@ -124,100 +144,16 @@ export async function getAdminAds(): Promise<AdminAd[]> {
   }
 }
 
-export interface TaskSubmission {
-  id: string;
-  task: {
-    id: string;
-    title: string;
-    slug: string;
-    reward_amount: number;
-    reward_coins: number;
-  };
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    phone: string;
-  };
-  status: "SUBMITTED" | "REVIEWING" | "APPROVED" | "REJECTED" | "DELETED";
-  proof_url: string;
-  proof_type: string | null;
-  notes: string | null;
-  submitted_at: string;
-  reviewed_at: string | null;
-  reviewer: {
-    id: string;
-    username: string;
-  } | null;
-}
-
-export async function getTaskSubmissions(
-  filters?: {
-    status?: string;
-    task_id?: string;
-    user_id?: string;
-    page?: number;
-    per_page?: number;
-  },
-): Promise<{
-  data: TaskSubmission[];
-  pagination: PaginationMeta;
-}> {
+export async function getAdminSubmissions(status?: string): Promise<AdminSubmission[]> {
   try {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append("status", filters.status);
-    if (filters?.task_id) params.append("task_id", filters.task_id);
-    if (filters?.user_id) params.append("user_id", filters.user_id);
-    if (filters?.page) params.append("page", filters.page.toString());
-    if (filters?.per_page) params.append("per_page", filters.per_page.toString());
-    const query = params.toString();
-    const path = `/api/admin/tasks/submissions${query ? `?${query}` : ""}`;
-    const data = await serverFetch<{ success: boolean; data: TaskSubmission[]; pagination: PaginationMeta }>(path);
-    if (!data.success) {
-      redirect("/login");
-    }
-    return {
-      data: data.data,
-      pagination: data.pagination,
-    };
-  } catch {
-    redirect("/login");
-  }
-}
-
-export interface UpdateSubmissionStatusResponse {
-  message: string;
-  submission_id: string;
-  status: string;
-  reviewed_at: string;
-}
-
-export async function updateSubmissionStatus(
-  submissionId: string,
-  status: "APPROVED" | "REJECTED" | "REVIEWING",
-  reviewNotes?: string,
-): Promise<UpdateSubmissionStatusResponse> {
-  try {
-    const data = await serverFetch<{ success: boolean } & UpdateSubmissionStatusResponse>(
-      "/api/admin/tasks/submissions/update",
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          submission_id: submissionId,
-          new_status: status,
-          review_notes: reviewNotes,
-        }),
-      },
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    const data = await serverFetch<{ success: boolean; submissions: AdminSubmission[] }>(
+      `/api/admin/submissions.php${query}`,
     );
     if (!data.success) {
       redirect("/login");
     }
-    return {
-      message: data.message,
-      submission_id: data.submission_id,
-      status: data.status,
-      reviewed_at: data.reviewed_at,
-    };
+    return data.submissions;
   } catch {
     redirect("/login");
   }

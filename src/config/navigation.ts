@@ -1,20 +1,26 @@
-import { LayoutDashboard, Megaphone, ShieldCheck, UserCheck, Wallet, ClipboardList, FileCheck, Package } from "lucide-react";
+export type NavigationIcon = "dashboard" | "referrals" | "withdraw" | "ads" | "admins" | "members" | "security" | "submissions";
 
-export const memberNavigation = [
-  { href: "/member/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/member/referrals", label: "Referrals", icon: UserCheck },
-  { href: "/member/tasks", label: "Tasks", icon: ClipboardList },
-  { href: "/member/products", label: "My Products", icon: Package },
-  { href: "/member/withdraw", label: "Withdraw", icon: Wallet },
+export type NavigationItem = {
+  href: string;
+  label: string;
+  icon: NavigationIcon;
+};
+
+export const memberNavigation: NavigationItem[] = [
+  { href: "/member/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/member/tasks", label: "Tasks", icon: "dashboard" },
+  { href: "/member/referrals", label: "Referrals", icon: "referrals" },
+  { href: "/member/withdraw", label: "Withdraw", icon: "withdraw" },
 ];
 
-export const adminNavigation = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/referrals", label: "Referrals", icon: UserCheck },
-  { href: "/admin/tasks", label: "Task Submissions", icon: FileCheck },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
-  { href: "/admin/ads", label: "Ads", icon: Megaphone },
-  { href: "/admin/security", label: "Security", icon: ShieldCheck },
+export const adminNavigation: NavigationItem[] = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/admin/submissions", label: "Submissions", icon: "submissions" },
+  { href: "/admin/referrals", label: "Referrals", icon: "referrals" },
+  { href: "/admin/withdrawals", label: "Withdrawals", icon: "withdraw" },
+  { href: "/admin/ads", label: "Ads", icon: "ads" },
+  { href: "/admin/admins", label: "Admins", icon: "admins" },
+  { href: "/admin/members", label: "Members", icon: "members" },
+  { href: "/admin/security", label: "Security", icon: "security" },
 ];
 
