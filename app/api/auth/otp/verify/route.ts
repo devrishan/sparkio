@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { verifyOtp } from '@/lib/otp-provider';
+import { prisma } from '@/lib/prisma';
+import { signAccessToken, signRefreshToken } from '@/lib/jwt';
+import { Role } from '@prisma/client';
+
+const verifySchema = z.object({
+  phone: z.string(),
+  code: z.string().length(6),
+  referralCode: z.string().optional(),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { phone, code, referralCode } = verifySchema.parse(body);
+
+    const isValid = await verifyOtp({ phone, code });
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid or expired OTP' }, { status: 400 });
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { phone } });
+
+    if (!user) {
+      // Optional: handle referral linkage
+      let referredById: string | undefined;
+      if (referralCode) {
+        const referrer = await prisma.user.findUnique({ where: { referralCode } });
+        if (referrer) {
+          referredById = referrer.id;
+        }
+      }
+
+      // Generate a unique referral code for this user
+      const generatedReferralCode = `EQ${Date.now().toString(36).toUpperCase()}`;
+
+      user = await prisma.user.create({
+        data: {
+          phone,
+          role: Role.USER,
+          referralCode: generatedReferralCode,
+          referredById,
+          wallet: {
+            create: {},
+          },
+          gamification: {
+            create: {},
+          },
+        },
+      });
+
+      // Create multi-level referral events if user was referred
+      if (referredById) {
+        const { createMultiLevelReferralEvents } = await import('@/lib/referrals');
+        await createMultiLevelReferralEvents(user.id, 0); // Base commission will be set when referral is verified
+      }
+    }
+
+    // Update daily login streak and award XP
+    const { updateStreak } = await import('@/lib/gamification');
+    await updateStreak(user.id);
+
+    // Create a session and issue tokens
+    const session = await prisma.session.create({
+      data: {
+        userId: user.id,
+        refreshToken: '',
+        expiresAt: new Date(Date.now() + Number(process.env.JWT_REFRESH_TOKEN_TTL_SECONDS ?? 60 * 60 * 24 * 30) * 1000),
+      },
+    });
+
+    const accessToken = signAccessToken({ sub: user.id, role: user.role });
+    const refreshToken = signRefreshToken({ sub: user.id, sid: session.id });
+
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { refreshToken },
+    });
+
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+
+    const accessTtlSeconds = Number(process.env.JWT_ACCESS_TOKEN_TTL_SECONDS ?? 900);
+    const refreshTtlSeconds = Number(process.env.JWT_REFRESH_TOKEN_TTL_SECONDS ?? 60 * 60 * 24 * 30);
+
+    response.cookies.set('earniq_access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: accessTtlSeconds,
+      path: '/',
+    });
+
+    response.cookies.set('earniq_refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: refreshTtlSeconds,
+      path: '/',
+    });
+
+    return response;
+  } catch (error: unknown) {
+    console.error('OTP verify error', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: error.flatten() },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ error: 'Failed to verify OTP' }, { status: 500 });
+  }
+}
+
+

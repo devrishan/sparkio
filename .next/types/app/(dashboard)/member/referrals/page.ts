@@ -1,4 +1,4 @@
-// File: /Applications/XAMPP/xamppfiles/htdocs/sparkio/sparkio/app/(dashboard)/member/referrals/page.tsx
+// File: E:\sparkio\sparkio\app\(dashboard)\member\referrals\page.tsx
 import * as entry from '../../../../../../app/(dashboard)/member/referrals/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,5 +1,25 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+export const LoadingSkeleton = ({ className }: { className?: string }) => (
+  <Card className={cn("border-border bg-card", className)}>
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex items-start justify-between gap-2">
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-6 w-16" />
+      </div>
+      <Skeleton className="h-6 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <div className="flex items-center gap-2 mt-4">
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="h-10 w-full mt-4" />
+    </div>
+  </Card>
+);
 
 export const WalletSkeleton = () => (
   <Card className="relative overflow-hidden border-border bg-card p-4 sm:p-6">

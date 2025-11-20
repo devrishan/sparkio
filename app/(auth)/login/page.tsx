@@ -1,8 +1,5 @@
 "use client";
 
-"use client";
-
-import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -56,7 +53,7 @@ export default function LoginPage() {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Welcome back!", { description: "You are now signed in." });
       const destination = user.role === "admin" ? "/admin/dashboard" : redirectPath;
-      router.replace(destination as Route);
+      router.replace(destination as any);
     },
     onError: (error: Error) => {
       toast.error("Login failed", { description: error.message });

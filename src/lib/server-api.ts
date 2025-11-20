@@ -12,18 +12,25 @@ export async function serverFetch<T = unknown>(
   { auth = true, headers, ...init }: ServerFetchOptions = {},
 ): Promise<T> {
   const cookieStore = cookies();
-  const token = cookieStore.get("sparkio_token")?.value;
+  // Try new token first, fallback to legacy
+  const accessToken = cookieStore.get("earniq_access_token")?.value;
+  const legacyToken = cookieStore.get("sparkio_token")?.value;
+  const token = accessToken || legacyToken;
+
+  // For Next.js API routes, use relative path
+  const isNextApiRoute = path.startsWith("/api/");
+  const baseUrl = isNextApiRoute ? "" : env.API_BASE_URL;
 
   const requestHeaders = new Headers({
     "Content-Type": "application/json",
     ...Object.fromEntries(headers ? new Headers(headers) : []),
   });
 
-  if (auth && token) {
+  if (auth && token && !isNextApiRoute) {
     requestHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${env.API_BASE_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: requestHeaders,
     cache: "no-store",

@@ -1,4 +1,4 @@
-// File: /Applications/XAMPP/xamppfiles/htdocs/sparkio/sparkio/app/api/auth/login/route.ts
+// File: E:\sparkio\sparkio\app\api\auth\login\route.ts
 import * as entry from '../../../../../../app/api/auth/login/route.js'
 import type { NextRequest } from 'next/server.js'
 

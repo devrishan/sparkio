@@ -80,7 +80,7 @@ export function WithdrawWithQr({ availableBalance, minAmount = 100 }: WithdrawWi
         </div>
         <h3 className="mb-2 text-xl font-semibold text-foreground">Withdrawal Requested!</h3>
         <p className="text-sm text-muted-foreground">
-          Your request is being processed. You'll receive the amount within 24-48 hours.
+          Your request is being processed. You&apos;ll receive the amount within 24-48 hours.
         </p>
       </Card>
     );

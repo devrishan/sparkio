@@ -1,0 +1,495 @@
+// Prisma schema for Earniq platform
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  VERIFIER
+  PAYOUT_MANAGER
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+  DELETED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationType {
+  TASK_APPROVED
+  TASK_REJECTED
+  WITHDRAWAL_UPDATE
+  REFERRAL_VERIFIED
+  RANK_UPGRADE
+  STREAK_WARNING
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum Rank {
+  NEWBIE
+  PRO
+  ELITE
+  MASTER
+}
+
+model User {
+  id              String    @id @default(cuid())
+  phone           String    @unique @db.VarChar(20)
+  email           String?   @unique @db.VarChar(255)
+  username        String?   @unique @db.VarChar(100)
+  role            Role      @default(USER)
+  // Auth-related
+  hashedPassword  String?   @db.VarChar(255) // optional backup password; primary auth is OTP
+  emailVerifiedAt DateTime?
+  emailVerificationToken String? @unique @db.VarChar(255)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Soft delete
+  deletedAt       DateTime?
+  isDeleted       Boolean   @default(false)
+
+  // Referral & hierarchy
+  referralCode    String    @unique @db.VarChar(20)
+  referredById    String?  
+  referredBy      User?     @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals       User[]    @relation("UserReferrals")
+
+  // Wallet & gamification
+  wallet          Wallet?
+  transactions    WalletTransaction[]
+  withdrawals     Withdrawal[]
+  gamification    GamificationState?
+
+  // Tasks
+  submissions     TaskSubmission[]
+
+  // Notifications & sessions
+  notifications   Notification[]
+  sessions        Session[]
+
+  // Referrals & tree
+  referralEvents  Referral[] @relation("ReferrerEvents")
+  referredUserEvents Referral[] @relation("ReferredUser")
+  
+  // New relations
+  preferences     UserPreference?
+  paymentMethods  PaymentMethod[]
+  activityLogs    ActivityLog[]
+  leaderboards    Leaderboard[]
+  auditLogs       AuditLog[] @relation("AuditLogActor")
+  
+  // Reviewer relation
+  reviewedSubmissions TaskSubmission[] @relation("SubmissionReviewer")
+  
+  // Product suggestions
+  productSuggestions ProductSuggestion[]
+
+  @@index([referredById])
+  @@index([role])
+  @@index([phone])
+  @@index([email])
+  @@index([isDeleted, deletedAt])
+}
+
+model Session {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken       String   @unique @db.VarChar(255)
+  createdAt          DateTime @default(now())
+  expiresAt          DateTime
+  lastActivityAt     DateTime?
+  userAgent          String?  @db.VarChar(500)
+  ipAddress          String?  @db.VarChar(45)
+  revokedAt          DateTime?
+  revokedReason      String?  @db.VarChar(255)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, revokedAt])
+}
+
+model OtpRequest {
+  id          String   @id @default(cuid())
+  phone       String   @db.VarChar(20)
+  codeHash    String   @db.VarChar(255)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  verifiedAt  DateTime?
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+  ipAddress   String?  @db.VarChar(45)
+  isBlocked   Boolean  @default(false)
+
+  @@index([phone])
+  @@index([expiresAt])
+  @@index([phone, verifiedAt])
+}
+
+model Wallet {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance        Decimal   @default(0.0) @db.Decimal(10, 2)
+  pendingAmount  Decimal   @default(0.0) @db.Decimal(10, 2)
+  withdrawable   Decimal   @default(0.0) @db.Decimal(10, 2)
+  lockedAmount   Decimal   @default(0.0) @db.Decimal(10, 2)
+  coins          Int       @default(0)
+  totalEarned    Decimal   @default(0.0) @db.Decimal(10, 2)
+  currency       String    @default("INR") @db.VarChar(3)
+  updatedAt      DateTime  @updatedAt
+  transactions   WalletTransaction[]
+}
+
+model WalletTransaction {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId       String
+  wallet         Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount         Decimal          @db.Decimal(10, 2)
+  type           String           @db.VarChar(50)
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+model Withdrawal {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount         Decimal           @db.Decimal(10, 2)
+  status         WithdrawalStatus  @default(PENDING)
+  upiId          String            @db.VarChar(255)
+  upiQrUrl       String?           @db.VarChar(500)
+  requestedAt    DateTime          @default(now())
+  processedAt    DateTime?
+  txId           String?           @db.VarChar(255)
+  receiptUrl     String?           @db.VarChar(500)
+  notes          String?           @db.Text
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([status, requestedAt])
+}
+
+model TaskCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(100)
+  slug      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  isDeleted Boolean  @default(false)
+  tasks     Task[]
+  templates TaskTemplate[]
+}
+
+model Task {
+  id             String           @id @default(cuid())
+  title          String           @db.VarChar(255)
+  slug           String           @unique @db.VarChar(255)
+  description    String           @db.Text
+  categoryId     String
+  category       TaskCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  rewardAmount   Decimal          @db.Decimal(10, 2)
+  rewardCoins    Int              @default(0)
+  difficulty     String           @db.VarChar(50)
+  isActive       Boolean          @default(true)
+  maxSubmissions Int?
+  expiresAt      DateTime?
+  priority       Int              @default(0)
+  deletedAt      DateTime?
+  isDeleted      Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  submissions    TaskSubmission[]
+  completionRules TaskCompletionRule[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([slug])
+  @@index([categoryId, isActive])
+  @@index([isDeleted, deletedAt])
+}
+
+model TaskSubmission {
+  id             String            @id @default(cuid())
+  taskId         String
+  task           Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         SubmissionStatus  @default(SUBMITTED)
+  proofUrl       String            @db.VarChar(500)
+  proofType      String?           @db.VarChar(50)
+  notes          String?           @db.Text
+  reviewedById   String?
+  reviewedBy     User?             @relation("SubmissionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  submittedAt    DateTime          @default(now())
+  reviewedAt     DateTime?
+  metadata       Json?
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([userId, status])
+  @@index([taskId, status])
+}
+
+// Multi-level referral events (level 1/2/3, amounts, etc.)
+model Referral {
+  id               String   @id @default(cuid())
+  referrerId       String
+  referrer         User     @relation("ReferrerEvents", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId   String
+  referredUser     User     @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+  level            Int
+  commissionAmount Decimal  @default(0.0) @db.Decimal(10, 2)
+  status           String   @default("pending") @db.VarChar(50)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([level])
+  @@index([status])
+  @@index([referrerId, status])
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         NotificationType
+  title        String           @db.VarChar(255)
+  body         String           @db.Text
+  data         Json?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead, createdAt])
+}
+
+model GamificationState {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp             Int      @default(0)
+  rank           Rank     @default(NEWBIE)
+  streakDays     Int      @default(0)
+  lastLoginAt    DateTime?
+  badges         BadgeOnUser[]
+
+  @@index([rank])
+  @@index([xp])
+}
+
+model Badge {
+  id          String        @id @default(cuid())
+  code        String        @unique @db.VarChar(50)
+  name        String        @db.VarChar(100)
+  description String        @db.Text
+  icon        String?       @db.VarChar(255)
+  createdAt   DateTime      @default(now())
+  users       BadgeOnUser[]
+}
+
+model BadgeOnUser {
+  id             String            @id @default(cuid())
+  badgeId        String
+  badge          Badge             @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  gamificationId String
+  gamification   GamificationState @relation(fields: [gamificationId], references: [id], onDelete: Cascade)
+  earnedAt       DateTime          @default(now())
+}
+
+// Spark Wall events (for real-time feed)
+model SparkEvent {
+  id          String   @id @default(cuid())
+  type        String   @db.VarChar(50)
+  message     String   @db.Text
+  data        Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+}
+
+// Minimal audit logs, especially for payouts
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      String   @db.VarChar(100)
+  entityId    String?  @db.VarChar(255)
+  entityType  String?  @db.VarChar(50)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+// Rate limiting for API and auth
+model RateLimit {
+  id          String   @id @default(cuid())
+  identifier  String   @db.VarChar(255) // phone, email, IP, userId
+  type        String   @db.VarChar(50) // "otp", "login", "api"
+  count       Int      @default(1)
+  windowStart DateTime
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  @@index([identifier, type, windowStart])
+  @@index([expiresAt])
+}
+
+// User preferences
+model UserPreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language      String   @default("en") @db.VarChar(10)
+  timezone      String   @default("UTC") @db.VarChar(50)
+  notifications Json?    // notification preferences
+  theme         String   @default("light") @db.VarChar(20)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Payment methods for users
+model PaymentMethod {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   @db.VarChar(20) // "UPI", "BANK", "WALLET"
+  upiId       String?  @db.VarChar(255)
+  bankAccount Json?
+  isDefault   Boolean  @default(false)
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId, isDefault])
+}
+
+// Task templates
+model TaskTemplate {
+  id          String        @id @default(cuid())
+  name        String        @db.VarChar(255)
+  description String        @db.Text
+  categoryId  String
+  category    TaskCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  rewardAmount Decimal       @db.Decimal(10, 2)
+  rewardCoins Int           @default(0)
+  difficulty  String        @db.VarChar(50)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([categoryId, isActive])
+}
+
+// Activity logs (enhanced)
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String   @db.VarChar(100)
+  entityType  String?  @db.VarChar(50)
+  entityId    String?  @db.VarChar(255)
+  metadata    Json?
+  ipAddress   String?  @db.VarChar(45)
+  userAgent   String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+}
+
+// Leaderboard
+model Leaderboard {
+  id          String   @id @default(cuid())
+  period      String   @db.VarChar(20) // "daily", "weekly", "monthly", "alltime"
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rank        Int
+  score       Decimal  @db.Decimal(10, 2)
+  periodStart DateTime
+  periodEnd   DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@unique([period, userId, periodStart])
+  @@index([period, rank])
+  @@index([period, score])
+}
+
+// Task completion rules
+model TaskCompletionRule {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  ruleType    String   @db.VarChar(50) // "daily_limit", "cooldown", "prerequisite"
+  value       Json
+  createdAt   DateTime @default(now())
+  
+  @@index([taskId])
+}
+
+// Product suggestions from users
+model ProductSuggestion {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productName String   @db.VarChar(255)
+  platform    String   @db.VarChar(100) // "amazon", "flipkart", etc.
+  category    String?  @db.VarChar(100)
+  amount      Decimal? @db.Decimal(10, 2)
+  orderId     String?  @db.VarChar(255)
+  files       Json?    // S3 URLs array
+  status      String   @default("pending") @db.VarChar(50) // pending, approved, rejected, converted
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([platform])
+  @@index([status, createdAt])
+}
+

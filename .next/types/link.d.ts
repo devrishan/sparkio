@@ -29,29 +29,35 @@ declare namespace __next_route_internal_types__ {
     S extends `${string}${SearchOrHash}` ? never : S
 
   type StaticRoutes = 
-    | `/`
-    | `/login`
-    | `/register`
-    | `/admin/ads`
-    | `/admin/dashboard`
-    | `/admin/referrals`
-    | `/admin/security`
-    | `/admin/withdrawals`
-    | `/admin/admins`
-    | `/admin/members`
-    | `/member/dashboard`
-    | `/member/referrals`
-    | `/member/withdraw`
     | `/api/admin/ads/create`
     | `/api/admin/ads/delete`
     | `/api/admin/ads/update`
     | `/api/admin/referrals/update`
+    | `/api/admin/tasks/submissions/update`
     | `/api/admin/withdrawals/process`
     | `/api/auth/login`
+    | `/api/auth/otp/request`
+    | `/api/auth/otp/verify`
     | `/api/auth/logout`
     | `/api/auth/register`
     | `/api/auth/session`
+    | `/api/member/tasks/submit`
     | `/api/member/withdraw`
+    | `/`
+    | `/login`
+    | `/register`
+    | `/admin/ads`
+    | `/admin/admins`
+    | `/admin/members`
+    | `/admin/dashboard`
+    | `/admin/security`
+    | `/admin/tasks`
+    | `/admin/withdrawals`
+    | `/member/referrals`
+    | `/member/dashboard`
+    | `/admin/referrals`
+    | `/member/tasks`
+    | `/member/withdraw`
   type DynamicRoutes<T extends string = string> = never
 
   type RouteImpl<T> = 

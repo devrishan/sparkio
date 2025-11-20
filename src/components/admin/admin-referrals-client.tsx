@@ -61,7 +61,7 @@ export function AdminReferralsClient({ referrals, pagination, statusFilter }: Ad
   const setSearchParams = (updater: (params: URLSearchParams) => void) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     updater(params);
-    router.replace(`/admin/referrals?${params.toString()}`);
+    router.replace(`/admin/referrals?${params.toString()}` as any);
   };
 
   const handleFilterChange = (value: string | null) => {

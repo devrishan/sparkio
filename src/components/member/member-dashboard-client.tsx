@@ -106,6 +106,7 @@ export function MemberDashboardClient({ dashboard, referrals }: MemberDashboardC
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
                 <ChartTooltip cursor={{ fill: "hsl(var(--muted)/0.4)" }} content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="verified" stackId="a" radius={[12, 12, 0, 0]} fill="var(--color-verified)" />
                 <Bar dataKey="pending" stackId="a" radius={[0, 0, 12, 12]} fill="var(--color-pending)" />
               </BarChart>
@@ -116,18 +117,12 @@ export function MemberDashboardClient({ dashboard, referrals }: MemberDashboardC
         <WalletCard
           balance={dashboard.wallet.balance}
           totalEarned={dashboard.wallet.total_earned}
-          onWithdraw={() => router.push("/member/withdraw")}
+          onWithdraw={() => router.push("/member/withdraw" as any)}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ReferralList referrals={referrals.slice(0, 6).map(ref => ({
-          ...ref,
-          status: 
-            ref.status === "verified" || ref.status === "pending" || ref.status === "rejected"
-            ? ref.status
-            : "pending"
-        }))} />
+        <ReferralList referrals={referrals.slice(0, 6)} />
 
         <Card className="border-border bg-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
