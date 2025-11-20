@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
+import { getMaintenanceState } from "@/lib/maintenance";
 
 export async function POST(request: NextRequest) {
+  const maintenanceState = await getMaintenanceState();
+  if (maintenanceState.enabled) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: maintenanceState.message ?? "Login is temporarily disabled for maintenance. Please try again later.",
+      },
+      { status: 503 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
 
   if (!body?.email || !body?.password) {

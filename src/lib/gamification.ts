@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { Rank } from '@prisma/client';
+import { updateLeaderboardScore } from './leaderboards';
 
 /**
  * XP thresholds for each rank
@@ -80,23 +81,33 @@ export async function addXP(
     },
   });
 
+  try {
+    await updateLeaderboardScore(userId, 'xp', newXP);
+  } catch (err) {
+    console.error('Failed to update leaderboard score', err);
+  }
+
   // Create XP event log if metadata provided
   if (metadata) {
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        action: 'XP_EARNED',
-        metadata: {
-          amount,
-          reason,
-          oldXP: gamification.xp,
-          newXP,
-          oldRank,
-          newRank,
-          ...metadata,
+    try {
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          action: 'XP_EARNED',
+          metadata: {
+            amount,
+            reason,
+            oldXP: gamification.xp,
+            newXP,
+            oldRank,
+            newRank,
+            ...metadata,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      console.error('Failed to log activity for XP earned', err);
+    }
   }
 
   return {
@@ -120,13 +131,21 @@ export async function awardBadge(userId: string, badgeCode: string): Promise<boo
     return false;
   }
 
+  const gamification = await prisma.gamificationState.upsert({
+    where: { userId },
+    update: {},
+    create: {
+      userId,
+      xp: 0,
+      rank: Rank.NEWBIE,
+    },
+  });
+
   // Check if user already has this badge
-  const existing = await prisma.badgeOnUser.findUnique({
+  const existing = await prisma.badgeOnUser.findFirst({
     where: {
-      userId_badgeId: {
-        userId,
-        badgeId: badge.id,
-      },
+      badgeId: badge.id,
+      gamificationId: gamification.id,
     },
   });
 
@@ -137,8 +156,8 @@ export async function awardBadge(userId: string, badgeCode: string): Promise<boo
   // Award badge
   await prisma.badgeOnUser.create({
     data: {
-      userId,
       badgeId: badge.id,
+      gamificationId: gamification.id,
       earnedAt: new Date(),
     },
   });
@@ -383,4 +402,3 @@ export async function handleReferralVerification(userId: string, referralId: str
   // Check and award badges
   await checkAndAwardBadges(userId);
 }
-

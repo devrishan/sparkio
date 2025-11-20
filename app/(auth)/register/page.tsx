@@ -57,7 +57,7 @@ export default function RegisterPage() {
     onSuccess: ({ user }) => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Account created", { description: "Welcome to Sparkio!" });
-      router.replace((user.role === "admin" ? "/admin/dashboard" : "/member/dashboard") as any);
+      router.replace(user.role === "admin" ? "/admin/dashboard" : "/member/dashboard");
     },
     onError: (error: Error) => {
       toast.error("Registration failed", { description: error.message });

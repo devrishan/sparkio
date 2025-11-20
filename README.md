@@ -58,6 +58,12 @@ API_BASE_URL=http://localhost/sparkio
 
 If you prefer PHP’s built-in server instead of Apache, set the API URLs to `http://localhost:8080` (or whichever host/port you bind to).
 
+Key variables to double-check:
+- `DB_*` — MySQL connection details for the PHP API.
+- `JWT_SECRET` — 32+ character secret for signing tokens.
+- `FRONTEND_ORIGIN` — Allowed origin for CORS (e.g., `http://localhost:3000`).
+- `NEXT_PUBLIC_API_BASE_URL`, `API_BASE_URL` — URL where the PHP API is served (defaults to `http://localhost:8080` or your Apache alias).
+
 > The `.env` file is shared by both the PHP API and the Next.js frontend.
 
 ### 3. Prepare the database
@@ -81,8 +87,7 @@ Serve the API directory with Apache/XAMPP (preferred for Windows) or PHP's built
   php -S 0.0.0.0:8080 -t api
   ```
 
-Ensure the URL you serve from matches the values in `.env` (`API_BASE_URL` & `NEXT_PUBLIC_API_BASE_URL`).
-
+Ensure the host/port you choose matches the values in `.env` (`API_BASE_URL` & `NEXT_PUBLIC_API_BASE_URL`).
 ### 5. Run the Next.js frontend
 ```bash
 npm run dev
@@ -102,6 +107,10 @@ sql/                 # Database schema and seed scripts
 middleware.ts        # Next.js route protection
 env.example          # Environment variable template
 ```
+
+### Maintenance mode
+- Visit `/admin/maintenance` to disable logins, set a custom notice, and pick how many minutes until access is restored automatically.
+- While maintenance is active, `/login` shows the configured message (including the automatic resume time) and `/api/auth/login` returns `503 Service Unavailable`, so no new sessions can be created.
 
 ---
 

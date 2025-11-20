@@ -62,8 +62,8 @@ export function AdminDashboardClient({ metrics, pendingWithdrawals }: AdminDashb
             <p className="text-sm text-muted-foreground">
               Approve or reject payouts to keep the community paid on time.
             </p>
-          </div>
-          <Button variant="outline" onClick={() => router.push("/admin/withdrawals" as any)}>
+        </div>
+        <Button variant="outline" onClick={() => router.push("/admin/withdrawals")}>
             Manage Queue
           </Button>
         </div>

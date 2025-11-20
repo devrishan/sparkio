@@ -1,31 +1,49 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
 import { verifyAccessToken } from "@/lib/jwt";
+
+type LegacyUserCookie = {
+  role?: string;
+};
+
+function parseLegacyUserCookie(cookie?: string): LegacyUserCookie | null {
+  if (!cookie) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(cookie);
+  } catch {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get("earniq_access_token")?.value;
-  
-  // Fallback to old token for backward compatibility during migration
   const legacyToken = request.cookies.get("sparkio_token")?.value;
   const token = accessToken || legacyToken;
+  const legacyUser = parseLegacyUserCookie(request.cookies.get("sparkio_user")?.value);
 
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
   const isMemberRoute = pathname.startsWith("/member");
   const isAdminRoute = pathname.startsWith("/admin");
 
-  // Verify token and extract user info
+  // Determine role based on JWT payload or legacy cookie
   let userRole: string | null = null;
   if (accessToken) {
     try {
       const payload = verifyAccessToken(accessToken);
       userRole = payload.role;
     } catch {
-      // Token invalid, will redirect to login
+      // Invalid/expired token – fall back to legacy cookie if present
+      userRole = legacyUser?.role?.toUpperCase() ?? null;
     }
+  } else if (legacyUser?.role) {
+    userRole = legacyUser.role.toUpperCase();
   }
 
-  // Require authentication for protected routes
   if ((isMemberRoute || isAdminRoute) && !token) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
@@ -33,7 +51,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect authenticated users away from auth pages
   if (token && isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = userRole === "ADMIN" ? "/admin/dashboard" : "/member/dashboard";
@@ -41,7 +58,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Require admin role for admin routes
   if (token && isAdminRoute && userRole !== "ADMIN") {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/member/dashboard";

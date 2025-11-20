@@ -81,7 +81,7 @@ try {
     ]);
 
     $userId = (int) $pdo->lastInsertId();
-    
+
     // Initialize wallet, role, and stats
     initialize_wallet($pdo, $userId);
     initialize_user_role($pdo, $userId);

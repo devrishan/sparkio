@@ -1,9 +1,10 @@
-import { z } from 'zod';
-import { getRedis } from './redis';
-import { prisma } from './prisma';
-import crypto from 'crypto';
-import twilio from 'twilio';
-import axios from 'axios';
+import { z } from "zod";
+import crypto from "crypto";
+import axios from "axios";
+import twilio from "twilio";
+
+import { getRedis } from "./redis";
+import { prisma } from "./prisma";
 
 const phoneSchema = z
   .string()
@@ -11,7 +12,7 @@ const phoneSchema = z
   .max(15)
   .regex(/^[0-9]+$/, 'Invalid phone number');
 
-export type OtpChannel = 'sms';
+export type OtpChannel = "sms";
 
 export interface SendOtpOptions {
   phone: string;
@@ -25,89 +26,78 @@ export interface VerifyOtpOptions {
 }
 
 function generateOtpCode(): string {
-  return (Math.floor(100000 + Math.random() * 900000)).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 function hashCode(code: string): string {
-  return crypto.createHash('sha256').update(code).digest('hex');
+  return crypto.createHash("sha256").update(code).digest("hex");
 }
 
-/**
- * Send OTP via MSG91
- */
 async function sendViaMsg91(phone: string, code: string): Promise<void> {
   const apiKey = process.env.MSG91_API_KEY;
-  const senderId = process.env.MSG91_SENDER_ID || 'EARNIQ';
+  const senderId = process.env.MSG91_SENDER_ID || "SPARKIO";
 
   if (!apiKey) {
-    throw new Error('MSG91_API_KEY is not configured');
+    throw new Error("MSG91_API_KEY is not configured");
   }
 
-  // Format phone number for MSG91 (add country code if missing)
   let formattedPhone = phone;
-  if (!phone.startsWith('91') && phone.length === 10) {
+  if (!phone.startsWith("91") && phone.length === 10) {
     formattedPhone = `91${phone}`;
   }
 
-  const message = `Your Earniq verification code is ${code}. Valid for 5 minutes.`;
+  const message = `Your Sparkio verification code is ${code}. Valid for 5 minutes.`;
 
   try {
     const response = await axios.post(
-      'https://api.msg91.com/api/v5/flow/',
+      "https://api.msg91.com/api/v5/flow/",
       {
         template_id: process.env.MSG91_TEMPLATE_ID,
         sender: senderId,
-        short_url: '0',
+        short_url: "0",
         mobiles: formattedPhone,
-        message: message,
+        message,
       },
       {
         headers: {
-          'authkey': apiKey,
-          'Content-Type': 'application/json',
+          authkey: apiKey,
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
 
-    // MSG91 also supports simple SMS endpoint
     if (response.status !== 200) {
-      // Fallback to simple SMS endpoint
-      await axios.get('https://api.msg91.com/api/sendhttp.php', {
+      await axios.get("https://api.msg91.com/api/sendhttp.php", {
         params: {
           authkey: apiKey,
           mobiles: formattedPhone,
-          message: message,
+          message,
           sender: senderId,
-          route: 4, // Transactional route
+          route: 4,
           country: 91,
         },
       });
     }
   } catch (error) {
-    console.error('[MSG91] Error sending OTP:', error);
-    throw new Error('Failed to send OTP via MSG91');
+    console.error("[MSG91] Error sending OTP:", error);
+    throw new Error("Failed to send OTP via MSG91");
   }
 }
 
-/**
- * Send OTP via Twilio
- */
 async function sendViaTwilio(phone: string, code: string): Promise<void> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
-    throw new Error('Twilio credentials are not configured');
+    throw new Error("Twilio credentials are not configured");
   }
 
-  // Format phone number for Twilio (E.164 format)
   let formattedPhone = phone;
-  if (!phone.startsWith('+')) {
-    // Assume Indian number if no country code
+  if (!phone.startsWith("+")) {
     if (phone.length === 10) {
       formattedPhone = `+91${phone}`;
-    } else if (phone.startsWith('91') && phone.length === 12) {
+    } else if (phone.startsWith("91") && phone.length === 12) {
       formattedPhone = `+${phone}`;
     } else {
       formattedPhone = `+${phone}`;
@@ -115,7 +105,7 @@ async function sendViaTwilio(phone: string, code: string): Promise<void> {
   }
 
   const client = twilio(accountSid, authToken);
-  const message = `Your Earniq verification code is ${code}. Valid for 5 minutes.`;
+  const message = `Your Sparkio verification code is ${code}. Valid for 5 minutes.`;
 
   try {
     await client.messages.create({
@@ -124,21 +114,20 @@ async function sendViaTwilio(phone: string, code: string): Promise<void> {
       to: formattedPhone,
     });
   } catch (error) {
-    console.error('[Twilio] Error sending OTP:', error);
-    throw new Error('Failed to send OTP via Twilio');
+    console.error("[Twilio] Error sending OTP:", error);
+    throw new Error("Failed to send OTP via Twilio");
   }
 }
 
-export async function sendOtp({ phone, channel = 'sms', ipAddress }: SendOtpOptions): Promise<void> {
+export async function sendOtp({ phone, channel = "sms", ipAddress }: SendOtpOptions): Promise<void> {
   const parsedPhone = phoneSchema.parse(phone);
 
-  // Check rate limit (10 requests per phone per hour)
-  const { checkRateLimit } = await import('./rate-limit');
+  const { checkRateLimit } = await import("./rate-limit");
   const rateLimitResult = await checkRateLimit({
     identifier: parsedPhone,
-    type: 'otp',
+    type: "otp",
     limit: 10,
-    windowSeconds: 3600, // 1 hour
+    windowSeconds: 3600,
   });
 
   if (!rateLimitResult.allowed) {
@@ -147,7 +136,7 @@ export async function sendOtp({ phone, channel = 'sms', ipAddress }: SendOtpOpti
 
   const code = generateOtpCode();
   const codeHash = hashCode(code);
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
   await prisma.otpRequest.create({
     data: {
@@ -158,24 +147,21 @@ export async function sendOtp({ phone, channel = 'sms', ipAddress }: SendOtpOpti
     },
   });
 
-  const provider = process.env.OTP_PROVIDER || 'dev';
+  const provider = process.env.OTP_PROVIDER || "dev";
 
-  // Store code in Redis for quick verification (optional, for development)
   const redis = getRedis();
-  if (redis && process.env.NODE_ENV === 'development') {
+  if (redis && process.env.NODE_ENV === "development") {
     const key = `otp:last:${parsedPhone}`;
-    await redis.set(key, code, 'EX', 300);
+    await redis.set(key, code, "EX", 300);
   }
 
-  // Send OTP via configured provider
-  if (provider === 'twilio') {
+  if (provider === "twilio") {
     await sendViaTwilio(parsedPhone, code);
-  } else if (provider === 'msg91') {
+  } else if (provider === "msg91") {
     await sendViaMsg91(parsedPhone, code);
   } else {
-    // Fallback for development only
     console.log(`[OTP][DEV] Code for ${parsedPhone}: ${code}`);
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       throw new Error('OTP_PROVIDER must be set to "msg91" or "twilio" in production');
     }
   }

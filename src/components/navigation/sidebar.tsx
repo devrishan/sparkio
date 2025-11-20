@@ -3,7 +3,17 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, LayoutDashboard, Megaphone, ShieldCheck, UserCheck, UserCog, Users2, Wallet } from "lucide-react";
+import {
+  ClipboardCheck,
+  LayoutDashboard,
+  Megaphone,
+  ShieldCheck,
+  UserCheck,
+  UserCog,
+  Users2,
+  Wallet,
+  Wrench,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { NavigationItem, NavigationIcon } from "@/config/navigation";
@@ -18,6 +28,7 @@ const iconMap: Record<NavigationIcon, LucideIcon> = {
   members: Users2,
   security: ShieldCheck,
   submissions: ClipboardCheck,
+  maintenance: Wrench,
 };
 
 export function Sidebar({ items }: { items: NavigationItem[] }) {
@@ -45,4 +56,5 @@ export function Sidebar({ items }: { items: NavigationItem[] }) {
     </nav>
   );
 }
+
 

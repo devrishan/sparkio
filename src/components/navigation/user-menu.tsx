@@ -30,7 +30,7 @@ export function UserMenu({ username = "Member", role = "member", onLogout }: Use
       return;
     }
 
-    router.push(("/login?redirect=" + encodeURIComponent(pathname ?? "/")) as any);
+    router.push("/login?redirect=" + encodeURIComponent(pathname ?? "/"));
   };
 
   return (

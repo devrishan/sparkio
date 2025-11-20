@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Role } from '@prisma/client';
+
 import { verifyOtp } from '@/lib/otp-provider';
 import { prisma } from '@/lib/prisma';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
-import { Role } from '@prisma/client';
 
 const verifySchema = z.object({
   phone: z.string(),
@@ -21,11 +22,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired OTP' }, { status: 400 });
     }
 
-    // Find or create user
     let user = await prisma.user.findUnique({ where: { phone } });
 
     if (!user) {
-      // Optional: handle referral linkage
       let referredById: string | undefined;
       if (referralCode) {
         const referrer = await prisma.user.findUnique({ where: { referralCode } });
@@ -34,7 +33,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Generate a unique referral code for this user
       const generatedReferralCode = `EQ${Date.now().toString(36).toUpperCase()}`;
 
       user = await prisma.user.create({
@@ -52,18 +50,15 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Create multi-level referral events if user was referred
       if (referredById) {
         const { createMultiLevelReferralEvents } = await import('@/lib/referrals');
-        await createMultiLevelReferralEvents(user.id, 0); // Base commission will be set when referral is verified
+        await createMultiLevelReferralEvents(user.id, 0);
       }
     }
 
-    // Update daily login streak and award XP
     const { updateStreak } = await import('@/lib/gamification');
     await updateStreak(user.id);
 
-    // Create a session and issue tokens
     const session = await prisma.session.create({
       data: {
         userId: user.id,

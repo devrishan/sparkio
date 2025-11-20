@@ -53,7 +53,7 @@ export default function LoginPage() {
       queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Welcome back!", { description: "You are now signed in." });
       const destination = user.role === "admin" ? "/admin/dashboard" : redirectPath;
-      router.replace(destination as any);
+      router.replace(destination);
     },
     onError: (error: Error) => {
       toast.error("Login failed", { description: error.message });

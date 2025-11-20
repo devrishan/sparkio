@@ -158,4 +158,3 @@ export async function getAdminSubmissions(status?: string): Promise<AdminSubmiss
     redirect("/login");
   }
 }
-

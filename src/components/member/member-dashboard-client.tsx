@@ -117,7 +117,7 @@ export function MemberDashboardClient({ dashboard, referrals }: MemberDashboardC
         <WalletCard
           balance={dashboard.wallet.balance}
           totalEarned={dashboard.wallet.total_earned}
-          onWithdraw={() => router.push("/member/withdraw" as any)}
+          onWithdraw={() => router.push("/member/withdraw")}
         />
       </div>
 

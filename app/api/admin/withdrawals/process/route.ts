@@ -17,11 +17,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    let userId: string;
     let userRole: string;
     try {
       const payload = verifyAccessToken(accessToken);
-      userId = payload.sub;
       userRole = payload.role;
 
       // Only admins and payout managers can process
@@ -39,9 +37,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { withdrawal_id, new_status, tx_id, receipt_url, notes } = body;
+    const { withdrawal_id, new_status: requestedStatus, tx_id: initialTxId, receipt_url: receiptUrl, notes: initialNotes } = body;
+    let newStatus: WithdrawalStatus | undefined = requestedStatus;
+    let notes = initialNotes as string | undefined;
+    let txId = initialTxId as string | undefined;
 
-    if (!withdrawal_id || !new_status) {
+    if (!withdrawal_id || !newStatus) {
       return NextResponse.json(
         { success: false, error: 'withdrawal_id and new_status are required' },
         { status: 400 },
@@ -49,7 +50,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const validStatuses: WithdrawalStatus[] = ['APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'FAILED'];
-    if (!validStatuses.includes(new_status)) {
+    if (!validStatuses.includes(newStatus)) {
       return NextResponse.json(
         { success: false, error: 'Invalid status' },
         { status: 400 },
@@ -83,7 +84,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Process payout if approved (outside transaction to avoid long-running external calls)
-    if (new_status === 'APPROVED') {
+    if (newStatus === 'APPROVED') {
       const payoutResult = await processPayout({
         amount: Number(withdrawal.amount),
         upiId: withdrawal.upiId,
@@ -94,16 +95,10 @@ export async function PUT(request: NextRequest) {
       });
 
       if (payoutResult.success && payoutResult.payoutId) {
-        // Update status based on payout result
-        if (payoutResult.status === 'SUCCESS') {
-          new_status = 'COMPLETED';
-        } else {
-          new_status = 'PROCESSING';
-        }
-        tx_id = payoutResult.txId || payoutResult.payoutId;
+        newStatus = payoutResult.status === 'SUCCESS' ? 'COMPLETED' : 'PROCESSING';
+        txId = payoutResult.txId || payoutResult.payoutId;
       } else {
-        // Payout initiation failed
-        new_status = 'FAILED';
+        newStatus = 'FAILED';
         notes = payoutResult.failureReason || 'Payout initiation failed';
       }
     }
@@ -114,17 +109,17 @@ export async function PUT(request: NextRequest) {
       const updated = await tx.withdrawal.update({
         where: { id: withdrawal_id },
         data: {
-          status: new_status,
-          processedAt: new_status === 'COMPLETED' || new_status === 'FAILED' ? new Date() : withdrawal.processedAt,
-          txId: tx_id || withdrawal.txId,
-          receiptUrl: receipt_url || withdrawal.receiptUrl,
+          status: newStatus,
+          processedAt: newStatus === 'COMPLETED' || newStatus === 'FAILED' ? new Date() : withdrawal.processedAt,
+          txId: txId || withdrawal.txId,
+          receiptUrl: receiptUrl || withdrawal.receiptUrl,
           notes: notes || withdrawal.notes,
         },
       });
 
       // Handle wallet updates based on status
       if (withdrawal.user.wallet) {
-        if (new_status === 'COMPLETED') {
+        if (newStatus === 'COMPLETED') {
           // Withdrawal completed - already deducted from withdrawable, just update pending
           await tx.wallet.update({
             where: { id: withdrawal.user.wallet.id },
@@ -132,7 +127,7 @@ export async function PUT(request: NextRequest) {
               pendingAmount: { decrement: Number(withdrawal.amount) },
             },
           });
-        } else if (new_status === 'FAILED' || new_status === 'REJECTED') {
+        } else if (newStatus === 'FAILED' || newStatus === 'REJECTED') {
           // Withdrawal failed - refund to withdrawable
           await tx.wallet.update({
             where: { id: withdrawal.user.wallet.id },
@@ -151,7 +146,7 @@ export async function PUT(request: NextRequest) {
               type: 'WITHDRAWAL_REFUND',
               metadata: {
                 withdrawalId: withdrawal.id,
-                reason: new_status === 'FAILED' ? 'Payout failed' : 'Withdrawal rejected',
+                reason: newStatus === 'FAILED' ? 'Payout failed' : 'Withdrawal rejected',
               },
             },
           });
@@ -159,13 +154,13 @@ export async function PUT(request: NextRequest) {
       }
 
       // Create notification
-      let notificationTitle = 'Withdrawal Update';
-      let notificationBody = `Your withdrawal request of ₹${withdrawal.amount} has been ${new_status.toLowerCase()}.`;
+      const notificationTitle = 'Withdrawal Update';
+      let notificationBody = `Your withdrawal request of ₹${withdrawal.amount} has been ${newStatus.toLowerCase()}.`;
 
-      if (new_status === 'COMPLETED') {
+      if (newStatus === 'COMPLETED') {
         notificationBody = `Your withdrawal of ₹${withdrawal.amount} has been processed successfully!`;
-      } else if (new_status === 'FAILED' || new_status === 'REJECTED') {
-        notificationBody = `Your withdrawal request of ₹${withdrawal.amount} has been ${new_status.toLowerCase()}.${notes ? ` Reason: ${notes}` : ''}`;
+      } else if (newStatus === 'FAILED' || newStatus === 'REJECTED') {
+        notificationBody = `Your withdrawal request of ₹${withdrawal.amount} has been ${newStatus.toLowerCase()}.${notes ? ` Reason: ${notes}` : ''}`;
       }
 
       await tx.notification.create({
@@ -177,8 +172,8 @@ export async function PUT(request: NextRequest) {
           data: {
             withdrawalId: withdrawal.id,
             amount: Number(withdrawal.amount),
-            status: new_status,
-            txId: tx_id,
+            status: newStatus,
+            txId: txId,
           },
         },
       });
@@ -190,7 +185,7 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: 'Withdrawal updated successfully',
       withdrawal_id: withdrawal_id,
-      status: new_status,
+      status: newStatus,
       processed_at: updatedWithdrawal.processedAt?.toISOString() || null,
     });
   } catch (error) {
