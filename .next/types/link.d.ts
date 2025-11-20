@@ -33,73 +33,73 @@ declare namespace __next_route_internal_types__ {
     | `/admin/admins`
     | `/admin/ads`
     | `/admin/dashboard`
-    | `/admin/feature-flags`
-    | `/admin/maintenance`
     | `/admin/members`
-    | `/admin/products`
     | `/admin/referrals`
     | `/admin/security`
-    | `/admin/tasks`
     | `/admin/withdrawals`
     | `/admin/submissions`
+    | `/admin/feature-flags`
+    | `/admin/tasks`
+    | `/admin/maintenance`
+    | `/admin/products`
     | `/member/dashboard`
-    | `/member/gamification`
-    | `/member/my-products`
-    | `/member/products`
     | `/member/referrals`
     | `/member/tasks`
     | `/member/withdraw`
+    | `/member/my-products`
+    | `/member/gamification`
+    | `/member/products`
     | `/register`
     | `/login`
-    | `/api/admin/feature-flags`
     | `/api/admin/ads`
     | `/api/admin/ads/create`
     | `/api/admin/ads/delete`
     | `/api/admin/ads/update`
-    | `/api/admin/maintenance`
-    | `/api/admin/products/suggestions`
-    | `/api/admin/submissions/review`
-    | `/api/admin/tasks/submissions`
-    | `/api/admin/tasks/submissions/update`
     | `/api/admin/referrals`
     | `/api/admin/referrals/update`
     | `/api/admin/withdrawals`
     | `/api/admin/withdrawals/process`
+    | `/api/admin/submissions/review`
+    | `/api/admin/maintenance`
+    | `/api/admin/products/suggestions`
+    | `/api/admin/tasks/submissions`
+    | `/api/admin/tasks/submissions/update`
+    | `/api/admin/feature-flags`
     | `/api/auth/login`
     | `/api/auth/logout`
-    | `/api/auth/maintenance`
     | `/api/auth/register`
     | `/api/auth/session`
+    | `/api/auth/maintenance`
     | `/api/auth/otp/request`
     | `/api/auth/otp/verify`
-    | `/api/health`
-    | `/api/cron/sync-leaderboards`
-    | `/api/leaderboards`
+    | `/api/member/withdraw`
+    | `/api/member/submit-task`
+    | `/api/member/dashboard`
+    | `/api/member/referrals`
     | `/api/member/gamification`
     | `/api/member/gamification/badges`
     | `/api/member/products`
     | `/api/member/products/suggest`
-    | `/api/member/referrals`
-    | `/api/member/dashboard`
-    | `/api/member/submit-task`
+    | `/api/member/tasks/submissions`
+    | `/api/member/tasks/submit`
     | `/api/member/wallet`
     | `/api/member/wallet/transactions`
-    | `/api/member/tasks/submit`
-    | `/api/member/tasks/submissions`
-    | `/api/member/withdraw`
+    | `/api/cron/sync-leaderboards`
+    | `/api/health`
     | `/api/products/top-suggestions`
     | `/api/sse/spark`
+    | `/api/webhooks/payouts`
+    | `/api/webhooks/payouts/razorpay`
+    | `/api/webhooks/payouts/cashfree`
+    | `/api/leaderboards`
     | `/api/tasks`
     | `/api/tasks/categories`
-    | `/api/webhooks/payouts`
-    | `/api/webhooks/payouts/cashfree`
-    | `/api/webhooks/payouts/razorpay`
   type DynamicRoutes<T extends string = string> = 
-    | `/api/admin/feature-flags/${SafeSlug<T>}`
     | `/api/admin/ads/${SafeSlug<T>}`
-    | `/api/admin/products/suggestions/${SafeSlug<T>}/convert`
-    | `/api/admin/products/suggestions/${SafeSlug<T>}/feature`
     | `/api/admin/referrals/${SafeSlug<T>}`
+    | `/api/admin/products/suggestions/${SafeSlug<T>}/feature`
+    | `/api/admin/products/suggestions/${SafeSlug<T>}/convert`
+    | `/api/admin/feature-flags/${SafeSlug<T>}`
     | `/api/leaderboards/${SafeSlug<T>}`
     | `/api/tasks/${SafeSlug<T>}`
 
