@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET!;
-const REFRESH_SECRET = process.env.JWT_REFRESH_TOKEN_SECRET!;
+// Support both new format (JWT_ACCESS_TOKEN_SECRET) and legacy format (JWT_SECRET)
+const ACCESS_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+const REFRESH_SECRET = process.env.JWT_REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || 'fallback-secret-change-in-production';
 
-if (!ACCESS_SECRET || !REFRESH_SECRET) {
+if (!process.env.JWT_ACCESS_TOKEN_SECRET && !process.env.JWT_SECRET) {
   // In production, you should fail fast during startup if these are missing.
-  console.warn('JWT access/refresh secrets are not set. Tokens will not be secure.');
+  console.warn('JWT secrets are not set. Using fallback secret. This is insecure for production!');
 }
 
 export interface JwtAccessPayload {

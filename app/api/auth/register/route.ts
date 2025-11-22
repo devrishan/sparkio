@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
+import { setAuthCookies } from "@/lib/auth-cookies";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -12,7 +13,12 @@ export async function POST(request: NextRequest) {
   const registerResponse = await fetch(`${env.API_BASE_URL}/api/auth/register.php`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      username: body.username,
+      email: body.email,
+      password: body.password,
+      referral_code: body.referral_code,
+    }),
   });
 
   const registerResult = await registerResponse.json().catch(() => null);
@@ -24,10 +30,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Auto-login after successful registration
+  // Pass keep_me_signed_in if provided (though typically false for new registrations)
+  const keepSignedIn = body.keep_me_signed_in === true;
   const loginResponse = await fetch(`${env.API_BASE_URL}/api/auth/login.php`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: body.email, password: body.password }),
+    body: JSON.stringify({
+      email: body.email,
+      password: body.password,
+      keep_me_signed_in: keepSignedIn,
+    }),
   });
 
   const loginResult = await loginResponse.json().catch(() => null);
@@ -46,26 +59,16 @@ export async function POST(request: NextRequest) {
     user: loginResult.user,
   });
 
-  res.cookies.set({
-    name: "sparkio_token",
-    value: loginResult.token,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: expiresIn,
-    path: "/",
-  });
-
-  res.cookies.set({
-    name: "sparkio_user",
-    value: JSON.stringify(loginResult.user),
-    httpOnly: false,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: expiresIn,
-    path: "/",
+  // Use the new cookie helper to set both access and refresh tokens
+  // The refresh token is the same as access token from PHP API (we treat it as access token)
+  setAuthCookies(res, {
+    accessToken: loginResult.token,
+    refreshToken: loginResult.token, // PHP API returns single token, we use it for both
+    user: loginResult.user,
+    keepSignedIn,
+    accessTokenTTL: expiresIn,
+    refreshTokenTTL: keepSignedIn ? 2592000 : 86400, // 30 days if keepSignedIn, else 1 day
   });
 
   return res;
 }
-

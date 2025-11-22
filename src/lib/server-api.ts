@@ -38,22 +38,72 @@ export async function serverFetch<T = unknown>(
     }
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: requestHeaders,
-    cache: "no-store",
-  });
+  try {
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "API request failed");
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: requestHeaders,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text().catch(() => "API request failed");
+      throw new Error(error || "API request failed");
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    // Handle abort/timeout errors
+    if (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) {
+      throw new Error("API request timed out. The server may be unreachable.");
+    }
+    // Handle network errors gracefully
+    if (error instanceof TypeError || (error instanceof Error && error.message.includes("fetch"))) {
+      throw new Error("API server is not available. Please ensure the PHP API server is running.");
+    }
+    throw error;
   }
-
-  return (await response.json()) as T;
 }
 
 export function clearAuthCookies() {
   const response = NextResponse.json({ success: true });
+  
+  // Clear new cookie names
+  response.cookies.set({
+    name: "earniq_access_token",
+    value: "",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+  response.cookies.set({
+    name: "earniq_refresh_token",
+    value: "",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+  response.cookies.set({
+    name: "earniq_user",
+    value: "",
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+  
+  // Clear legacy cookies for backward compatibility
   response.cookies.set({
     name: "sparkio_token",
     value: "",
