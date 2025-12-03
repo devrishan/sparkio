@@ -1,5 +1,4 @@
-import Razorpay from 'razorpay';
-import { Cashfree } from 'cashfree-sdk';
+// Dynamic imports to avoid build errors if packages are not installed
 
 export interface PayoutOptions {
   amount: number; // in rupees
@@ -22,7 +21,7 @@ export interface PayoutResult {
 /**
  * Initialize Razorpay client
  */
-function getRazorpayClient(): Razorpay | null {
+async function getRazorpayClient(): Promise<any | null> {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -31,10 +30,16 @@ function getRazorpayClient(): Razorpay | null {
     return null;
   }
 
-  return new Razorpay({
-    key_id: keyId,
-    key_secret: keySecret,
-  });
+  try {
+    const Razorpay = (await import('razorpay')).default;
+    return new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+  } catch (error) {
+    console.warn('Razorpay package not installed. Install it with: npm install razorpay');
+    return null;
+  }
 }
 
 /**
@@ -60,7 +65,7 @@ function getCashfreeHeaders(): { 'x-client-id': string; 'x-client-secret': strin
  * Process payout via Razorpay
  */
 async function processRazorpayPayout(options: PayoutOptions): Promise<PayoutResult> {
-  const razorpay = getRazorpayClient();
+  const razorpay = await getRazorpayClient();
   if (!razorpay) {
     return {
       success: false,
@@ -210,7 +215,7 @@ export async function processPayout(options: PayoutOptions): Promise<PayoutResul
  * Verify payout status from Razorpay
  */
 export async function verifyRazorpayPayout(payoutId: string): Promise<PayoutResult> {
-  const razorpay = getRazorpayClient();
+  const razorpay = await getRazorpayClient();
   if (!razorpay) {
     return {
       success: false,

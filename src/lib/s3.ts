@@ -1,13 +1,23 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+// Dynamic imports to avoid build errors if AWS SDK is not installed
+let s3Client: any = null;
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ap-south-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+async function getS3Client() {
+  if (s3Client) return s3Client;
+  
+  try {
+    const { S3Client } = await import('@aws-sdk/client-s3');
+    s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'ap-south-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      },
+    });
+    return s3Client;
+  } catch (error) {
+    throw new Error('AWS SDK is required for S3 operations. Install it with: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner');
+  }
+}
 
 const BUCKET_NAME = process.env.S3_BUCKET || 'earniq-uploads';
 
@@ -30,6 +40,9 @@ export interface UploadResult {
 export async function uploadToS3(options: UploadFileOptions): Promise<UploadResult> {
   const { file, fileName, contentType, folder = 'uploads' } = options;
 
+  const client = await getS3Client();
+  const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+
   // Generate unique file name with timestamp
   const timestamp = Date.now();
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
@@ -44,7 +57,7 @@ export async function uploadToS3(options: UploadFileOptions): Promise<UploadResu
     ACL: 'private',
   });
 
-  await s3Client.send(command);
+  await client.send(command);
 
   // Generate public URL (or use CloudFront CDN URL if configured)
   const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${key}`;
@@ -60,24 +73,31 @@ export async function uploadToS3(options: UploadFileOptions): Promise<UploadResu
  * Get signed URL for private S3 object (valid for 1 hour by default)
  */
 export async function getSignedS3Url(key: string, expiresIn: number = 3600): Promise<string> {
+  const client = await getS3Client();
+  const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+  const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+  
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
   });
 
-  return await getSignedUrl(s3Client, command, { expiresIn });
+  return await getSignedUrl(client, command, { expiresIn });
 }
 
 /**
  * Delete file from S3
  */
 export async function deleteFromS3(key: string): Promise<void> {
+  const client = await getS3Client();
+  const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+  
   const command = new DeleteObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
   });
 
-  await s3Client.send(command);
+  await client.send(command);
 }
 
 /**

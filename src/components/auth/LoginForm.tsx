@@ -1,13 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { login as authLogin, isAuthenticated } from "@/lib/auth";
+import { useSession } from "@/components/providers/session-provider";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { EarniqLogo } from "./EarniqLogo";
 import { PasswordInput } from "./PasswordInput";
+import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required.").email("Please enter a valid email."),
@@ -27,9 +30,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams?.get("redirect") ?? "/member/dashboard";
+  const nextPath = searchParams?.get("next") || searchParams?.get("redirect");
+  const redirectPath = nextPath || "/member/dashboard";
+  const { status, user, refetch } = useSession();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,44 +42,102 @@ export function LoginForm() {
       password: "",
       keep_me_signed_in: false,
     },
+    mode: "onBlur", // Validate on blur for inline feedback
   });
 
-  const mutation = useMutation({
-    mutationFn: async (values: LoginFormValues) => {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-          keep_me_signed_in: values.keep_me_signed_in,
-        }),
-      });
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "authenticated" && user) {
+      // Determine redirect based on user role
+      const destination = user.role === "admin" ? "/admin/dashboard" : redirectPath;
+      router.push(destination as any);
+    } else if (status === "loading") {
+      // Check mock auth while SessionProvider is loading
+      if (isAuthenticated()) {
+        // Wait a bit for SessionProvider to catch up, then redirect
+        const timer = setTimeout(() => {
+          // Double-check authentication status before redirecting
+          // (SessionProvider might have updated by now)
+          if (isAuthenticated()) {
+            router.push(redirectPath as any);
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [status, user, router, redirectPath]);
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Unable to login." }));
-        throw new Error(error.error || "Unable to login.");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const onSubmit = async (values: LoginFormValues) => {
+    setIsSubmitting(true);
+
+    try {
+      // Use new auth utilities
+      const result = await authLogin(values.email, values.password);
+
+      if (!result.success || !result.session) {
+        throw new Error(result.error || "Login failed");
       }
 
-      return (await response.json()) as { user: { role: "member" | "admin" } };
-    },
-    onSuccess: ({ user }) => {
-      queryClient.invalidateQueries({ queryKey: ["session"] });
       toast.success("Welcome back!", { description: "You are now signed in." });
-      const destination = user.role === "admin" ? "/admin/dashboard" : redirectPath;
-      router.replace(destination);
-    },
-    onError: (error: Error) => {
-      toast.error("Login failed", { description: error.message });
-      form.setError("root", { message: error.message });
-    },
-  });
 
-  const onSubmit = (values: LoginFormValues) => {
-    mutation.mutate(values);
+      // Determine redirect based on user role from session
+      const userRole = result.session?.user?.role || 
+        (values.email.toLowerCase().includes("admin") || values.email.toLowerCase() === "admin@earniq.app" ? "admin" : "member");
+      const destination = userRole === "admin" ? "/admin/dashboard" : redirectPath;
+
+      // Refetch session to update SessionProvider (with timeout to prevent hanging)
+      try {
+        await Promise.race([
+          refetch(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Session refresh timeout")), 2000)
+          ),
+        ]);
+      } catch (refetchError) {
+        console.warn("[LoginForm] Session refetch failed or timed out:", refetchError);
+        // Continue anyway - localStorage is already set
+      }
+
+      // Redirect immediately after a short delay
+      setTimeout(() => {
+        router.push(destination as any);
+        // Reset submitting state as fallback
+        setIsSubmitting(false);
+      }, 100);
+    } catch (error) {
+      console.error("[LoginForm] Login error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast.error("Login failed", { description: errorMessage });
+      form.setError("root", { message: errorMessage });
+      setIsSubmitting(false);
+    }
   };
 
-  const isSubmitting = mutation.isPending;
+  // Demo account handler
+  const handleDemoLogin = async () => {
+    setIsSubmitting(true);
+    try {
+      // Use demo credentials
+      const demoEmail = "demo@example.com";
+      const demoPassword = "demo12345";
+
+      // Prefill form
+      form.setValue("email", demoEmail);
+      form.setValue("password", demoPassword);
+
+      // Submit
+      await onSubmit({
+        email: demoEmail,
+        password: demoPassword,
+        keep_me_signed_in: false,
+      });
+    } catch (error) {
+      console.error("[LoginForm] Demo login error:", error);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -137,13 +199,7 @@ export function LoginForm() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel htmlFor="login-password">Password</FormLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-                    tabIndex={isSubmitting ? -1 : 0}
-                  >
-                    Forgot password?
-                  </Link>
+                  <ForgotPasswordDialog />
                 </div>
                 <FormControl>
                   <PasswordInput
@@ -216,6 +272,28 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
+
+      {/* Demo Account Button */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={handleDemoLogin}
+        disabled={isSubmitting}
+        aria-label="Use demo account to sign in instantly"
+      >
+        <Sparkles className="mr-2 h-4 w-4" />
+        Use demo account
+      </Button>
 
       {/* Footer link */}
       <p className="text-center text-sm text-muted-foreground">

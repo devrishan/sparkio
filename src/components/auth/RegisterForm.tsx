@@ -1,17 +1,19 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { register as authRegister, isAuthenticated } from "@/lib/auth";
+import { useSession } from "@/components/providers/session-provider";
 import type { PasswordStrength } from "./PasswordStrength";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
@@ -32,15 +34,19 @@ const registerSchema = z.object({
     .trim()
     .optional()
     .transform((val) => (val && val.length > 0 ? val.toUpperCase() : undefined)),
+  accept_terms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Terms and Privacy Policy to continue.",
+  }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [passwordStrength, setPasswordStrength] = React.useState<PasswordStrength>("none");
-  const [isRedirecting, setIsRedirecting] = React.useState(false);
+  const { status, user, refetch } = useSession();
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>("none");
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -49,48 +55,94 @@ export function RegisterForm() {
       email: "",
       password: "",
       referral_code: "",
+      accept_terms: false,
     },
+    mode: "onBlur", // Validate on blur for inline feedback
   });
 
-  const mutation = useMutation({
-    mutationFn: async (values: RegisterFormValues) => {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          referral_code: values.referral_code || undefined,
-        }),
-      });
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "authenticated" && user) {
+      router.push("/member/dashboard");
+    } else if (status === "loading") {
+      // Check mock auth while SessionProvider is loading
+      if (isAuthenticated()) {
+        const timer = setTimeout(() => {
+          if (status === "authenticated" || isAuthenticated()) {
+            router.push("/member/dashboard");
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [status, user, router]);
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Unable to register." }));
-        throw new Error(error.error || "Unable to register.");
+  const onSubmit = async (values: RegisterFormValues) => {
+    setIsSubmitting(true);
+    setIsRedirecting(true);
+
+    try {
+      // Use new auth utilities
+      const result = await authRegister(
+        values.email,
+        values.password,
+        values.username,
+        values.referral_code
+      );
+
+      if (!result.success || !result.session) {
+        throw new Error(result.error || "Registration failed");
       }
 
-      return (await response.json()) as { user: { role: "member" | "admin" } };
-    },
-    onSuccess: ({ user }) => {
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-      setIsRedirecting(true);
       toast.success("Account created", { description: "Welcome to Earniq!" });
-      
+
+      // Refetch session to update SessionProvider
+      await refetch();
+
       // Small delay to show the loading state, then redirect to dashboard
       setTimeout(() => {
         router.push("/member/dashboard");
       }, 500);
-    },
-    onError: (error: Error) => {
-      toast.error("Registration failed", { description: error.message });
-      form.setError("root", { message: error.message });
-    },
-  });
-
-  const onSubmit = (values: RegisterFormValues) => {
-    mutation.mutate(values);
+    } catch (error) {
+      console.error("[RegisterForm] Registration error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast.error("Registration failed", { description: errorMessage });
+      form.setError("root", { message: errorMessage });
+      setIsSubmitting(false);
+      setIsRedirecting(false);
+    }
   };
 
-  const isSubmitting = mutation.isPending || isRedirecting;
+  // Demo account handler
+  const handleDemoRegister = async () => {
+    setIsSubmitting(true);
+    try {
+      // Use demo credentials
+      const demoEmail = `demo_${Date.now()}@example.com`;
+      const demoPassword = "demo12345";
+      const demoUsername = `demo_${Date.now().toString().slice(-6)}`;
+
+      // Prefill form
+      form.setValue("username", demoUsername);
+      form.setValue("email", demoEmail);
+      form.setValue("password", demoPassword);
+      form.setValue("accept_terms", true);
+
+      // Submit
+      await onSubmit({
+        username: demoUsername,
+        email: demoEmail,
+        password: demoPassword,
+        referral_code: undefined,
+        accept_terms: true,
+      });
+    } catch (error) {
+      console.error("[RegisterForm] Demo registration error:", error);
+      setIsSubmitting(false);
+      setIsRedirecting(false);
+    }
+  };
+
   const passwordValue = form.watch("password");
 
   // Show loading state during redirect
@@ -264,6 +316,46 @@ export function RegisterForm() {
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="accept_terms"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isSubmitting}
+                    id="accept_terms"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel
+                    htmlFor="accept_terms"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="font-medium text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="font-medium text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Privacy Policy
+                    </Link>
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+
           <Button
             type="submit"
             className="w-full rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -279,27 +371,30 @@ export function RegisterForm() {
               "Create account"
             )}
           </Button>
-
-          {/* Terms and Privacy */}
-          <p className="text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link
-              href="/terms"
-              className="font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-            >
-              Terms
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/privacy"
-              className="font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-            >
-              Privacy Policy
-            </Link>
-            .
-          </p>
         </form>
       </Form>
+
+      {/* Demo Account Button */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={handleDemoRegister}
+        disabled={isSubmitting}
+        aria-label="Create a demo account instantly"
+      >
+        <Sparkles className="mr-2 h-4 w-4" />
+        Create demo account
+      </Button>
 
       {/* Footer link */}
       <p className="text-center text-sm text-muted-foreground">

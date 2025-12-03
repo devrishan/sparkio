@@ -36,7 +36,44 @@ export function signRefreshToken(payload: Omit<JwtRefreshPayload, 'type'>): stri
 }
 
 export function verifyAccessToken(token: string): JwtAccessPayload {
-  return jwt.verify(token, ACCESS_SECRET) as JwtAccessPayload;
+  // Handle mock tokens when in mock mode
+  if (process.env.USE_MOCK_DATA === 'true' && token.startsWith('mock_jwt_')) {
+    // Token format: mock_jwt_${userId}_${timestamp}
+    // Remove 'mock_jwt_' prefix
+    const withoutPrefix = token.replace('mock_jwt_', '');
+    // Split by last underscore to separate userId and timestamp
+    const lastUnderscoreIndex = withoutPrefix.lastIndexOf('_');
+    const userId = lastUnderscoreIndex > 0 
+      ? withoutPrefix.substring(0, lastUnderscoreIndex)
+      : withoutPrefix.split('_')[0]; // Fallback if no timestamp
+    
+    // Return a mock payload
+    return {
+      sub: userId,
+      role: 'USER',
+      type: 'access',
+    };
+  }
+  
+  try {
+    return jwt.verify(token, ACCESS_SECRET) as JwtAccessPayload;
+  } catch (error) {
+    // If verification fails but we're in mock mode, still allow mock tokens
+    if (process.env.USE_MOCK_DATA === 'true') {
+      // Try to extract userId from token format
+      if (token.includes('_')) {
+        const parts = token.split('_');
+        // Try to find a reasonable userId (skip common prefixes)
+        const userId = parts.find(p => p.startsWith('user')) || parts[0] || 'user_demo';
+        return {
+          sub: userId,
+          role: 'USER',
+          type: 'access',
+        };
+      }
+    }
+    throw error;
+  }
 }
 
 export function verifyRefreshToken(token: string): JwtRefreshPayload {

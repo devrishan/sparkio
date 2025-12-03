@@ -1,0 +1,90 @@
+[
+  {
+    "id": "camp-1",
+    "name": "GlowFit Summer Campaign",
+    "advertiser": "GlowFit Inc.",
+    "status": "active",
+    "budget": 500000,
+    "spent": 125000,
+    "conversions": 2500,
+    "costPerConversion": 50,
+    "startDate": "2024-08-01T00:00:00Z",
+    "endDate": null,
+    "demographics": {
+      "ageGroups": {
+        "18-25": 40,
+        "26-35": 35,
+        "36-45": 25
+      },
+      "locations": {
+        "Mumbai": 30,
+        "Delhi": 25,
+        "Bangalore": 20,
+        "Others": 25
+      },
+      "devices": {
+        "Android": 70,
+        "iOS": 30
+      }
+    }
+  },
+  {
+    "id": "camp-2",
+    "name": "Navi UPI Push",
+    "advertiser": "Navi Technologies",
+    "status": "active",
+    "budget": 800000,
+    "spent": 320000,
+    "conversions": 4800,
+    "costPerConversion": 67,
+    "startDate": "2024-07-15T00:00:00Z",
+    "endDate": "2024-09-15T00:00:00Z",
+    "demographics": {
+      "ageGroups": {
+        "18-25": 35,
+        "26-35": 40,
+        "36-45": 25
+      },
+      "locations": {
+        "Mumbai": 28,
+        "Delhi": 30,
+        "Bangalore": 22,
+        "Others": 20
+      },
+      "devices": {
+        "Android": 75,
+        "iOS": 25
+      }
+    }
+  },
+  {
+    "id": "camp-3",
+    "name": "KineticPay Install Drive",
+    "advertiser": "KineticPay",
+    "status": "paused",
+    "budget": 300000,
+    "spent": 180000,
+    "conversions": 2000,
+    "costPerConversion": 90,
+    "startDate": "2024-06-01T00:00:00Z",
+    "endDate": null,
+    "demographics": {
+      "ageGroups": {
+        "18-25": 45,
+        "26-35": 30,
+        "36-45": 25
+      },
+      "locations": {
+        "Mumbai": 25,
+        "Delhi": 28,
+        "Bangalore": 25,
+        "Others": 22
+      },
+      "devices": {
+        "Android": 80,
+        "iOS": 20
+      }
+    }
+  }
+]
+

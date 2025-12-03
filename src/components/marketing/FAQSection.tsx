@@ -45,8 +45,8 @@ const SUPPORT_SIDEBAR = {
   title: "Support team replies in under 15 minutes.",
   description: "Chat with us inside the dashboard or raise a ticket if a task needs manual review.",
   buttonText: "Login & open support",
-  buttonHref: "/login" as Route,
-  emailText: "Prefer email? Write to hello@sparkio.in",
+  buttonHref: "/support-center" as Route,
+  emailText: "Prefer email? Write to hello@earniq.in",
 } as const;
 
 interface FAQItemProps {

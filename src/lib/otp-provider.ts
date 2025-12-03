@@ -1,7 +1,5 @@
 import { z } from "zod";
 import crypto from "crypto";
-import axios from "axios";
-import twilio from "twilio";
 
 import { getRedis } from "./redis";
 import { prisma } from "./prisma";
@@ -35,10 +33,16 @@ function hashCode(code: string): string {
 
 async function sendViaMsg91(phone: string, code: string): Promise<void> {
   const apiKey = process.env.MSG91_API_KEY;
-  const senderId = process.env.MSG91_SENDER_ID || "SPARKIO";
+  const senderId = process.env.MSG91_SENDER_ID || "EARNIQ";
 
   if (!apiKey) {
     throw new Error("MSG91_API_KEY is not configured");
+  }
+
+  // Dynamic import to avoid build errors if axios is not installed
+  const axios = await import("axios").catch(() => null);
+  if (!axios) {
+    throw new Error("axios package is required for MSG91 OTP provider. Install it with: npm install axios");
   }
 
   let formattedPhone = phone;
@@ -46,10 +50,10 @@ async function sendViaMsg91(phone: string, code: string): Promise<void> {
     formattedPhone = `91${phone}`;
   }
 
-  const message = `Your Sparkio verification code is ${code}. Valid for 5 minutes.`;
+    const message = `Your Earniq verification code is ${code}. Valid for 5 minutes.`;
 
   try {
-    const response = await axios.post(
+    const response = await axios.default.post(
       "https://api.msg91.com/api/v5/flow/",
       {
         template_id: process.env.MSG91_TEMPLATE_ID,
@@ -67,7 +71,7 @@ async function sendViaMsg91(phone: string, code: string): Promise<void> {
     );
 
     if (response.status !== 200) {
-      await axios.get("https://api.msg91.com/api/sendhttp.php", {
+      await axios.default.get("https://api.msg91.com/api/sendhttp.php", {
         params: {
           authkey: apiKey,
           mobiles: formattedPhone,
@@ -93,6 +97,12 @@ async function sendViaTwilio(phone: string, code: string): Promise<void> {
     throw new Error("Twilio credentials are not configured");
   }
 
+  // Dynamic import to avoid build errors if twilio is not installed
+  const twilio = await import("twilio").catch(() => null);
+  if (!twilio) {
+    throw new Error("twilio package is required for Twilio OTP provider. Install it with: npm install twilio");
+  }
+
   let formattedPhone = phone;
   if (!phone.startsWith("+")) {
     if (phone.length === 10) {
@@ -104,8 +114,8 @@ async function sendViaTwilio(phone: string, code: string): Promise<void> {
     }
   }
 
-  const client = twilio(accountSid, authToken);
-  const message = `Your Sparkio verification code is ${code}. Valid for 5 minutes.`;
+  const client = twilio.default(accountSid, authToken);
+    const message = `Your Earniq verification code is ${code}. Valid for 5 minutes.`;
 
   try {
     await client.messages.create({

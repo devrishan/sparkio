@@ -1,0 +1,101 @@
+{
+  "revenue": {
+    "total": 3500000,
+    "thisMonth": 650000,
+    "lastMonth": 580000,
+    "growth": 12.1
+  },
+  "payouts": {
+    "total": 2450000,
+    "thisMonth": 450000,
+    "lastMonth": 420000,
+    "growth": 7.1
+  },
+  "profit": {
+    "total": 1050000,
+    "thisMonth": 200000,
+    "margin": 30.8
+  },
+  "byCategory": [
+    {
+      "category": "App Installs",
+      "revenue": 1200000,
+      "payouts": 840000,
+      "profit": 360000
+    },
+    {
+      "category": "UPI",
+      "revenue": 1500000,
+      "payouts": 1050000,
+      "profit": 450000
+    },
+    {
+      "category": "Social",
+      "revenue": 800000,
+      "payouts": 560000,
+      "profit": 240000
+    }
+  ],
+  "monthly": [
+    {
+      "month": "Jan",
+      "revenue": 280000,
+      "payouts": 196000,
+      "profit": 84000
+    },
+    {
+      "month": "Feb",
+      "revenue": 320000,
+      "payouts": 224000,
+      "profit": 96000
+    },
+    {
+      "month": "Mar",
+      "revenue": 380000,
+      "payouts": 266000,
+      "profit": 114000
+    },
+    {
+      "month": "Apr",
+      "revenue": 420000,
+      "payouts": 294000,
+      "profit": 126000
+    },
+    {
+      "month": "May",
+      "revenue": 480000,
+      "payouts": 336000,
+      "profit": 144000
+    },
+    {
+      "month": "Jun",
+      "revenue": 550000,
+      "payouts": 385000,
+      "profit": 165000
+    }
+  ],
+  "transactions": [
+    {
+      "id": "fin-tx-1",
+      "type": "revenue",
+      "amount": 50000,
+      "description": "Advertiser payment - GlowFit",
+      "timestamp": "2024-08-22T10:00:00Z"
+    },
+    {
+      "id": "fin-tx-2",
+      "type": "payout",
+      "amount": -25000,
+      "description": "Batch withdrawal processing",
+      "timestamp": "2024-08-22T09:00:00Z"
+    },
+    {
+      "id": "fin-tx-3",
+      "type": "revenue",
+      "amount": 30000,
+      "description": "Advertiser payment - Navi",
+      "timestamp": "2024-08-21T15:00:00Z"
+    }
+  ]
+}
+

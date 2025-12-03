@@ -21,3 +21,15 @@ export function maskPhone(phone: string): string {
 export function formatCurrency(amount: number): string {
   return `₹${amount.toFixed(2)}`;
 }
+
+/**
+ * Format amount with Indian number formatting
+ */
+export function formatAmount(amount: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}

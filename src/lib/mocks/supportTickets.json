@@ -1,0 +1,66 @@
+[
+  {
+    "id": "ticket-1",
+    "subject": "Withdrawal not processed",
+    "category": "Payment",
+    "status": "in_progress",
+    "priority": "high",
+    "createdAt": "2024-08-22T10:00:00Z",
+    "updatedAt": "2024-08-22T11:00:00Z",
+    "messages": [
+      {
+        "id": "msg-1",
+        "sender": "user",
+        "content": "My withdrawal request is still pending after 2 days",
+        "timestamp": "2024-08-22T10:00:00Z"
+      },
+      {
+        "id": "msg-2",
+        "sender": "support",
+        "content": "We're looking into this. Please share your transaction ID.",
+        "timestamp": "2024-08-22T11:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "ticket-2",
+    "subject": "Task submission rejected",
+    "category": "Tasks & Submissions",
+    "status": "resolved",
+    "priority": "medium",
+    "createdAt": "2024-08-20T14:00:00Z",
+    "updatedAt": "2024-08-21T09:00:00Z",
+    "messages": [
+      {
+        "id": "msg-3",
+        "sender": "user",
+        "content": "My task submission was rejected but I followed all requirements",
+        "timestamp": "2024-08-20T14:00:00Z"
+      },
+      {
+        "id": "msg-4",
+        "sender": "support",
+        "content": "We've reviewed your submission. The screenshot quality was too low. Please resubmit with a clearer image.",
+        "timestamp": "2024-08-21T09:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "ticket-3",
+    "subject": "Referral bonus not credited",
+    "category": "Referrals",
+    "status": "open",
+    "priority": "medium",
+    "createdAt": "2024-08-22T15:30:00Z",
+    "updatedAt": "2024-08-22T15:30:00Z",
+    "messages": [
+      {
+        "id": "msg-5",
+        "sender": "user",
+        "content": "My friend joined using my referral code but I didn't get the bonus",
+        "timestamp": "2024-08-22T15:30:00Z"
+      }
+    ]
+  }
+]
+

@@ -6,32 +6,42 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Zap, Flame, Award } from "lucide-react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { getMockToken } from "@/lib/auth";
 
 interface GamificationStats {
-  xp: number;
-  rank: string;
+  coins: number;
+  level: string;
+  currentXP: number;
+  nextLevelXP: number;
   streakDays: number;
-  nextRankXP: number;
-  currentRankXP: number;
-  badges: Array<{
+  achievements: Array<{
     id: string;
-    code: string;
     name: string;
     description: string;
-    icon: string | null;
-    earnedAt: string;
+    unlocked: boolean;
+    unlockedAt?: string;
   }>;
 }
 
 async function getGamificationStats(): Promise<GamificationStats> {
-  const response = await fetch("/api/member/gamification", {
+  const token = getMockToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch("/api/mocks/member/gamification", {
     credentials: "include",
+    headers: {
+      "x-mock-token": token,
+    },
   });
+  
   if (!response.ok) {
     throw new Error("Failed to fetch gamification stats");
   }
+  
   const data = await response.json();
-  return data.stats;
+  return data;
 }
 
 const RANK_INFO = {
@@ -68,11 +78,12 @@ export function GamificationDashboard() {
     );
   }
 
-  const rankInfo = RANK_INFO[stats.rank as keyof typeof RANK_INFO] || RANK_INFO.NEWBIE;
-  const xpProgress = rankInfo.nextXP
-    ? Math.max(0, Math.min(100, ((stats.xp - stats.currentRankXP) / (rankInfo.nextXP - stats.currentRankXP)) * 100))
+  const levelUpper = stats.level.toUpperCase();
+  const rankInfo = RANK_INFO[levelUpper as keyof typeof RANK_INFO] || RANK_INFO.NEWBIE;
+  const xpProgress = stats.nextLevelXP
+    ? Math.max(0, Math.min(100, ((stats.currentXP - rankInfo.xpRequired) / (stats.nextLevelXP - rankInfo.xpRequired)) * 100))
     : 100;
-  const xpToNext = rankInfo.nextXP ? Math.max(0, rankInfo.nextXP - stats.xp) : 0;
+  const xpToNext = stats.nextLevelXP ? Math.max(0, stats.nextLevelXP - stats.currentXP) : 0;
 
   return (
     <div className="space-y-6">
@@ -89,19 +100,14 @@ export function GamificationDashboard() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-3xl font-bold">{stats.xp.toLocaleString()}</span>
+                <span className="text-3xl font-bold">{stats.currentXP.toLocaleString()}</span>
                 <Badge className={rankInfo.color}>{rankInfo.name}</Badge>
               </div>
-              {rankInfo.nextXP && (
+              {stats.nextLevelXP && (
                 <>
                   <Progress value={xpProgress} className="h-2" />
                   <p className="text-sm text-muted-foreground mt-2">
-                    {xpToNext.toLocaleString()} XP until{' '}
-                    {rankInfo.nextXP === 1000
-                      ? RANK_INFO.PRO.name
-                      : rankInfo.nextXP === 5000
-                        ? RANK_INFO.ELITE.name
-                        : RANK_INFO.MASTER.name}
+                    {xpToNext.toLocaleString()} XP until next level
                   </p>
                 </>
               )}
@@ -148,7 +154,7 @@ export function GamificationDashboard() {
             <div className="flex-1">
               <p className="text-xl font-semibold">{rankInfo.name}</p>
               <p className="text-sm text-muted-foreground">
-                {stats.xp.toLocaleString()} / {rankInfo.nextXP ? rankInfo.nextXP.toLocaleString() : "∞"} XP
+                {stats.currentXP.toLocaleString()} / {stats.nextLevelXP ? stats.nextLevelXP.toLocaleString() : "∞"} XP
               </p>
             </div>
           </div>
@@ -160,25 +166,51 @@ export function GamificationDashboard() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Award className="h-5 w-5" />
-            Badges ({stats.badges.length})
+            Earniq Coins
+          </CardTitle>
+          <CardDescription>Your coin balance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-primary">{stats.coins.toLocaleString()}</div>
+            <div>
+              <p className="text-sm font-medium">Coins</p>
+              <p className="text-xs text-muted-foreground">Earn coins by completing tasks</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Achievements */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Achievements ({stats.achievements.filter(a => a.unlocked).length}/{stats.achievements.length})
           </CardTitle>
           <CardDescription>Your achievements and milestones</CardDescription>
         </CardHeader>
         <CardContent>
-          {stats.badges.length > 0 ? (
+          {stats.achievements.length > 0 ? (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {stats.badges.map((badge) => (
+              {stats.achievements.map((achievement) => (
                 <div
-                  key={badge.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card"
+                  key={achievement.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    achievement.unlocked 
+                      ? "border-primary/50 bg-primary/5" 
+                      : "border-border bg-muted/20 opacity-60"
+                  }`}
                 >
-                  <div className="text-2xl">{badge.icon || "🏆"}</div>
+                  <div className="text-2xl">{achievement.unlocked ? "🏆" : "🔒"}</div>
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground">{badge.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Earned {new Date(badge.earnedAt).toLocaleDateString()}
-                    </p>
+                    <p className="font-medium text-sm">{achievement.name}</p>
+                    <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                    {achievement.unlocked && achievement.unlockedAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

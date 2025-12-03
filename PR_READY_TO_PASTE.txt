@@ -1,0 +1,31 @@
+Title:
+auth(otp): production fixes — rate limiting, brute-force lockout, phone validation, cookie hardening
+
+Description:
+This PR hardens OTP-based phone authentication for production:
+
+- Adds per-phone (5/hr) and per-IP (10/hr) rate limiting with in-memory fallback
+- Adds brute-force protection: locks OTP for 15 minutes after 5 failed attempts
+- Adds strict phone normalization and Indian phone format validation
+- Removes non-httpOnly earniq_user cookie; session data now via server-only cookie + /api/auth/session
+- Adds feature flag (FEATURE_OTP_ENABLED) and maintenance-mode checks
+- Adds security logging hooks and unit/integration tests
+
+Notes:
+- In-memory stores are fine for single-instance staging but recommend Redis for production to support horizontal scaling and persistence
+- See OTP_AUTH_PRODUCTION_FIXES.md for detailed behavior and test instructions
+
+Files Changed:
+- src/lib/auth/in-memory-store.ts
+- app/api/auth/otp/request/route.ts
+- app/api/auth/otp/verify/route.ts
+- src/lib/rate-limit-memory.ts (new)
+- src/lib/security-logger.ts (new)
+- src/lib/auth/__tests__/in-memory-store.test.ts (new)
+- scripts/test-otp-integration.sh (new)
+- scripts/test-otp-integration.ps1 (new)
+
+Testing:
+Unit: npm test src/lib/auth/__tests__/in-memory-store.test.ts
+Integration: ./scripts/test-otp-integration.sh http://localhost:3000
+

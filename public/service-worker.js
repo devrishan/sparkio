@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sparkio-v1';
+const CACHE_NAME = 'earniq-v1';
 const urlsToCache = [
   '/',
   '/index.html',

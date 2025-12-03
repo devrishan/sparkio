@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMockToken } from "@/lib/auth";
 
 const productSuggestionSchema = z.object({
   productName: z.string().min(1, "Product name is required").max(255),
@@ -79,21 +80,24 @@ export function ProductSuggestionForm({ onSuccess, onCancel }: ProductSuggestion
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("productName", data.productName);
-      formData.append("platform", data.platform);
-      if (data.category) formData.append("category", data.category);
-      if (data.amount) formData.append("amount", data.amount);
-      if (data.orderId) formData.append("orderId", data.orderId);
+      // For mock, we'll use a simple URL instead of file upload
+      const proofUrl = files.length > 0 ? `https://example.com/proof/${Date.now()}.jpg` : null;
 
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
-
-      const response = await fetch("/api/member/products/suggest", {
+      const token = getMockToken();
+      const response = await fetch("/api/mocks/member/products/suggest", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "x-mock-token": token } : {}),
+        },
         credentials: "include",
+        body: JSON.stringify({
+          productName: data.productName,
+          platform: data.platform,
+          amount: data.amount ? parseFloat(data.amount) : null,
+          orderId: data.orderId || null,
+          proofUrl: proofUrl,
+        }),
       });
 
       const result = await response.json();

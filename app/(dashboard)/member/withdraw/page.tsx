@@ -1,10 +1,7 @@
-import { MemberWithdrawForm } from "@/components/member/member-withdraw-form";
+import { MemberWithdrawClient } from "@/components/member/member-withdraw-client";
 import { Card } from "@/components/ui/card";
-import { getMemberDashboard } from "@/services/member";
 
-export default async function MemberWithdrawPage() {
-  const dashboard = await getMemberDashboard();
-
+export default function MemberWithdrawPage() {
   return (
     <section className="space-y-6">
       <header className="space-y-1">
@@ -15,7 +12,7 @@ export default async function MemberWithdrawPage() {
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <MemberWithdrawForm balance={dashboard.wallet.balance} />
+        <MemberWithdrawClient />
 
         <Card className="h-fit border-border bg-card p-6 text-sm text-muted-foreground">
           <h3 className="text-lg font-semibold text-foreground">Withdrawal Checklist</h3>
@@ -30,4 +27,3 @@ export default async function MemberWithdrawPage() {
     </section>
   );
 }
-

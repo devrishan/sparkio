@@ -10,6 +10,7 @@ import { Plus, Package, Clock, CheckCircle2, XCircle, Image as ImageIcon } from 
 import { ProductSuggestionForm } from "./product-suggestion-form";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useToast } from "@/hooks/use-toast";
+import { getMockToken } from "@/lib/auth";
 
 interface Product {
   id: string;
@@ -25,11 +26,20 @@ interface Product {
 }
 
 async function fetchProducts(status?: string): Promise<Product[]> {
+  const token = getMockToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
   const params = new URLSearchParams();
-  if (status) params.append("status", status);
+  if (status && status !== "all") params.append("status", status);
   const query = params.toString();
-  const response = await fetch(`/api/member/products${query ? `?${query}` : ""}`, {
+  
+  const response = await fetch(`/api/mocks/member/products${query ? `?${query}` : ""}`, {
     credentials: "include",
+    headers: {
+      "x-mock-token": token,
+    },
   });
 
   if (!response.ok) {

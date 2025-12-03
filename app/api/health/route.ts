@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getRedis } from '@/lib/redis';
-import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 
 interface HealthCheck {
   status: 'ok' | 'error';
@@ -44,6 +43,18 @@ async function checkRedis(): Promise<HealthCheck> {
 async function checkS3(): Promise<HealthCheck> {
   const start = Date.now();
   try {
+    // Dynamic import to avoid build errors if AWS SDK is not installed
+    const { S3Client, HeadBucketCommand } = await import('@aws-sdk/client-s3').catch(() => {
+      return { 
+        S3Client: null, 
+        HeadBucketCommand: null 
+      };
+    });
+
+    if (!S3Client || !HeadBucketCommand) {
+      return { status: 'error', message: 'AWS SDK not installed. S3 checks are disabled.' };
+    }
+
     const s3Client = new S3Client({
       region: process.env.AWS_REGION || 'ap-south-1',
       credentials: {

@@ -1,43 +1,94 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-import { serverFetch } from "@/lib/server-api";
+import { verifyAccessToken } from "@/lib/jwt";
+import { findUserById } from "@/lib/auth/in-memory-store";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
     const cookieStore = cookies();
-    // Check both new and legacy cookie names
-    const accessToken = cookieStore.get("earniq_access_token")?.value || cookieStore.get("sparkio_token")?.value;
+    const accessToken = cookieStore.get("earniq_access_token")?.value;
 
     if (!accessToken) {
-      // Return 200 with unauthenticated status to avoid console errors
-      // The client-side code will handle this gracefully
       return NextResponse.json({ success: false, user: null });
     }
 
-    // Try to fetch user data from API, but don't fail the page if API is unavailable
     try {
-      const data = await serverFetch<{ success: boolean; user: unknown }>("/api/auth/me.php");
-      if (data && data.user) {
-        return NextResponse.json({ success: true, user: data.user });
-      }
-    } catch (error) {
-      // Silently fail - API might be unavailable, user will need to login again
-      // Don't log errors in production to avoid noise
-      if (process.env.NODE_ENV === "development") {
-        console.warn("Session API call failed:", error instanceof Error ? error.message : "Unknown error");
-      }
-    }
+      // Verify JWT token
+      const payload = verifyAccessToken(accessToken);
+      const userId = payload.sub;
 
-    // If we get here, either no token or API call failed - return unauthenticated
-    // Return 200 to avoid console errors for expected unauthenticated state
-    return NextResponse.json({ success: false, user: null });
+      // Try to get user from Prisma first
+      let user = null;
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            phone: true,
+            username: true,
+            email: true,
+            referralCode: true,
+            upiId: true,
+            role: true,
+          },
+        });
+
+        if (dbUser) {
+          user = {
+            id: dbUser.id,
+            phone: dbUser.phone,
+            username: dbUser.username || null,
+            email: dbUser.email || null,
+            referral_code: dbUser.referralCode || null,
+            upi_id: dbUser.upiId || null,
+            role: dbUser.role === "ADMIN" ? "admin" : "member",
+          };
+        }
+      } catch (prismaError) {
+        // If Prisma fails, fall back to in-memory store
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[Session] Prisma lookup failed, using in-memory store:", prismaError);
+        }
+      }
+
+      // Fall back to in-memory store if Prisma didn't return a user
+      if (!user) {
+        const inMemoryUser = findUserById(userId);
+        if (inMemoryUser) {
+          user = {
+            id: inMemoryUser.id,
+            phone: inMemoryUser.phone,
+            username: null,
+            email: null,
+            referral_code: inMemoryUser.referralCode || null,
+            upi_id: null,
+            role: inMemoryUser.role === "ADMIN" ? "admin" : "member",
+          };
+        }
+      }
+
+      if (!user) {
+        // User not found - invalid session
+        return NextResponse.json({ success: false, user: null });
+      }
+
+      // Return full user data
+      return NextResponse.json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      // Token verification failed
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[Session] Token verification failed:", error);
+      }
+      return NextResponse.json({ success: false, user: null });
+    }
   } catch (error) {
-    // Handle any unexpected errors gracefully - never throw
     if (process.env.NODE_ENV === "development") {
       console.error("Session route unexpected error:", error);
     }
-    // Return 200 even on errors to prevent console noise
     return NextResponse.json({ success: false, user: null });
   }
 }

@@ -1,15 +1,18 @@
 "use client";
 
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, CheckCircle2, Clock, Copy, Share2, Check } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { AlertCircle, CheckCircle2, Clock, Users } from "lucide-react";
-import { ReferralTree } from "./referral-tree";
-import { ReferralCommissions } from "./referral-commissions";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { toast } from "@/components/ui/sonner";
+import { useSession } from "@/components/providers/session-provider";
 
 interface Referral {
   id: string;
@@ -54,16 +57,63 @@ interface ReferralLevel {
   phone: string;
 }
 
-async function getMemberReferralsClient(includeTree: boolean = false): Promise<ReferralData> {
+// Simplified referral interface matching /api/mocks/referrals
+interface MockReferral {
+  id: string;
+  name: string;
+  phone: string; // Already masked
+  status: "verified" | "pending" | "rejected";
+  reward: number;
+  createdAt: string;
+}
+
+async function getMemberReferralsClient(statusFilter?: string): Promise<MockReferral[]> {
   const params = new URLSearchParams();
-  if (includeTree) params.append("include_tree", "true");
-  const response = await fetch(`/api/member/referrals?${params.toString()}`, {
+  if (statusFilter && statusFilter !== "all") {
+    params.append("status", statusFilter);
+  }
+
+  // Try mock API first
+  const token = typeof window !== "undefined" ? localStorage.getItem("mockToken") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  
+  if (token) {
+    headers["x-mock-token"] = token;
+  }
+
+  const response = await fetch(`/api/mocks/referrals?${params.toString()}`, {
     credentials: "include",
+    headers,
   });
+
   if (!response.ok) {
-    const errorData = await response.json();
+    // Fallback to existing API
+    try {
+      const fallbackResponse = await fetch(`/api/member/referrals?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        // Convert to MockReferral format
+        return (fallbackData.referrals || []).map((r: any) => ({
+          id: r.id,
+          name: r.referred_user?.username || r.referred_user?.name || `User ${r.referred_user?.phone?.slice(-4) || ""}`,
+          phone: r.referred_user?.phone ? `xxxxxx${r.referred_user.phone.slice(-3)}` : "xxxxxx000",
+          status: r.status || "pending",
+          reward: r.commission_amount || 0,
+          createdAt: r.created_at || r.referred_user?.created_at || new Date().toISOString(),
+        }));
+      }
+    } catch {
+      // Ignore fallback errors
+    }
+
+    const errorData = await response.json().catch(() => ({ error: "Failed to fetch referrals" }));
     throw new Error(errorData.error || "Failed to fetch referrals");
   }
+
   return response.json();
 }
 
@@ -106,11 +156,75 @@ function getLevelBadge(level: number) {
 }
 
 export function MemberReferralsClient() {
+  const router = useRouter();
+  const { user } = useSession();
   const [showTree, setShowTree] = useState(false);
-  const { data, isLoading, error } = useQuery<ReferralData>({
-    queryKey: ["memberReferrals", showTree],
-    queryFn: () => getMemberReferralsClient(showTree),
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Generate referral link
+  const referralLink = useMemo(() => {
+    const code = user?.referral_code || "DEMO001";
+    return `https://r.navi.com/${code}`;
+  }, [user]);
+
+  const { data, isLoading, error } = useQuery<MockReferral[]>({
+    queryKey: ["memberReferrals", statusFilter],
+    queryFn: () => getMemberReferralsClient(statusFilter),
   });
+
+  // Copy referral link to clipboard
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setCopiedId("main");
+      toast.success("Link copied!", { description: "Referral link copied to clipboard" });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error("Failed to copy", { description: "Could not copy link to clipboard" });
+    }
+  };
+
+  // Share via WhatsApp
+  const handleWhatsAppShare = () => {
+    const code = user?.referral_code || "DEMO001";
+    const text = `Join Earniq and earn rewards. Use my code: ${code}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  // Copy individual referral's link (if applicable)
+  const handleCopyReferralLink = async (referralId: string) => {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setCopiedId(referralId);
+      toast.success("Link copied!", { description: "Referral link copied to clipboard" });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error("Failed to copy", { description: "Could not copy link to clipboard" });
+    }
+  };
+
+  const referrals = data || [];
+
+  // Calculate stats from current referrals
+  const stats = useMemo(() => {
+    const total = referrals.length;
+    const verified = referrals.filter((r) => r.status === "verified").length;
+    const pending = referrals.filter((r) => r.status === "pending").length;
+    const rejected = referrals.filter((r) => r.status === "rejected").length;
+    const totalCommission = referrals
+      .filter((r) => r.status === "verified")
+      .reduce((sum, r) => sum + r.reward, 0);
+
+    return { total, verified, pending, rejected, totalCommission };
+  }, [referrals]);
+
+  // Filter referrals by status (client-side since API may already filter)
+  const filteredReferrals = useMemo(() => {
+    if (statusFilter === "all") return referrals;
+    return referrals.filter((r) => r.status === statusFilter);
+  }, [referrals, statusFilter]);
 
   if (isLoading) {
     return (
@@ -133,37 +247,52 @@ export function MemberReferralsClient() {
     );
   }
 
-  const referrals = data?.referrals || [];
-  const stats = data?.stats || { total: 0, verified: 0, pending: 0, total_commission: 0 };
-  const tree = data?.tree || [];
-
-  // Calculate commission breakdown by level
-  const commissionBreakdown = [
-    {
-      level: 1,
-      amount: referrals
-        .filter((r) => r.level === 1 && r.status === "verified")
-        .reduce((sum, r) => sum + r.commission_amount, 0),
-      count: referrals.filter((r) => r.level === 1 && r.status === "verified").length,
-    },
-    {
-      level: 2,
-      amount: referrals
-        .filter((r) => r.level === 2 && r.status === "verified")
-        .reduce((sum, r) => sum + r.commission_amount, 0),
-      count: referrals.filter((r) => r.level === 2 && r.status === "verified").length,
-    },
-    {
-      level: 3,
-      amount: referrals
-        .filter((r) => r.level === 3 && r.status === "verified")
-        .reduce((sum, r) => sum + r.commission_amount, 0),
-      count: referrals.filter((r) => r.level === 3 && r.status === "verified").length,
-    },
-  ];
-
   return (
     <div className="space-y-6">
+      {/* Referral Link Share Section */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+        <CardHeader>
+          <CardTitle>Your Referral Link</CardTitle>
+          <CardDescription>Share this link to earn rewards when friends join</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 rounded-lg border bg-background p-3">
+            <code className="flex-1 text-sm font-mono text-foreground break-all">{referralLink}</code>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopyLink}
+              className="shrink-0"
+              aria-label="Copy referral link"
+            >
+              {copiedId === "main" ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="flex-1"
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Link
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleWhatsAppShare}
+              className="flex-1"
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Share on WhatsApp
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -195,73 +324,89 @@ export function MemberReferralsClient() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Commission</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">₹{stats.total_commission.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-primary">₹{stats.totalCommission.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Commission Breakdown */}
-      <ReferralCommissions commissions={commissionBreakdown} totalCommission={stats.total_commission} />
-
-      {/* Referral Tree Toggle */}
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={() => setShowTree(!showTree)}>
-          <Users className="mr-2 h-4 w-4" />
-          {showTree ? "Hide" : "Show"} Referral Tree
-        </Button>
-      </div>
-
-      {/* Referral Tree */}
-      {showTree && tree && tree.length > 0 && <ReferralTree tree={tree} />}
-
-      {/* Referrals Table */}
+      {/* Status Filter Tabs */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Referrals</CardTitle>
-          <CardDescription>Users who joined using your referral code</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Your Referrals</CardTitle>
+              <CardDescription>Users who joined using your referral code</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Commission</TableHead>
-                <TableHead className="text-right">Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {referrals.length === 0 ? (
+        <CardContent className="space-y-4">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList>
+              <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+              <TabsTrigger value="verified">Verified ({stats.verified})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
+              {stats.rejected > 0 && <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>}
+            </TabsList>
+          </Tabs>
+
+          {/* Referrals Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
-                    No referrals yet. Start sharing your referral code!
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Reward</TableHead>
+                  <TableHead className="text-right">Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                referrals.map((referral) => (
-                  <TableRow key={referral.id}>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {referral.referred_user.username || `User ${referral.referred_user.phone.slice(-4)}`}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{referral.referred_user.email || referral.referred_user.phone}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getLevelBadge(referral.level)}</TableCell>
-                    <TableCell>{getStatusBadge(referral.status)}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₹{referral.commission_amount.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground text-sm">
-                      {new Date(referral.referred_user.created_at).toLocaleDateString()}
+              </TableHeader>
+              <TableBody>
+                {filteredReferrals.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                      {statusFilter === "all" 
+                        ? "No referrals yet. Start sharing your referral code!"
+                        : `No ${statusFilter} referrals found.`}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredReferrals.map((referral) => (
+                    <TableRow key={referral.id}>
+                      <TableCell>
+                        <span className="font-medium">{referral.name}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground font-mono">{referral.phone}</span>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(referral.status)}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ₹{referral.reward.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground text-sm">
+                        {new Date(referral.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCopyReferralLink(referral.id)}
+                          aria-label="Copy referral link"
+                        >
+                          {copiedId === referral.id ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

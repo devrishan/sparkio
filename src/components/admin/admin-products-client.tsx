@@ -13,34 +13,28 @@ import { Clock, CheckCircle2, XCircle, Package, Search, Filter, ArrowUpDown } fr
 import { ConvertSuggestionDialog } from "./convert-suggestion-dialog";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useToast } from "@/hooks/use-toast";
+import { getMockToken } from "@/lib/auth";
 
 interface ProductSuggestion {
   id: string;
   productName: string;
   platform: string;
-  category: string | null;
-  amount: number | null;
-  orderId: string | null;
-  files: string[] | null;
-  status: string;
-  user: {
-    id: string;
-    phone: string;
-    username: string | null;
-    email: string | null;
-  };
-  created_at: string;
-  updated_at: string;
+  amount: number;
+  orderId: string;
+  proofUrl: string;
+  status: "pending" | "approved" | "rejected" | "converted";
+  suggestedBy: string;
+  createdAt: string;
 }
 
 interface ProductSuggestionsResponse {
-  success: boolean;
-  data: ProductSuggestion[];
-  pagination: {
-    page: number;
-    per_page: number;
-    total: number;
-    total_pages: number;
+  products: ProductSuggestion[];
+  total: number;
+  stats: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    converted: number;
   };
 }
 
@@ -49,13 +43,20 @@ async function fetchSuggestions(filters: {
   platform?: string;
   page?: number;
 }): Promise<ProductSuggestionsResponse> {
+  const token = getMockToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
   const params = new URLSearchParams();
-  if (filters.status) params.append("status", filters.status);
+  if (filters.status && filters.status !== "all") params.append("status", filters.status);
   if (filters.platform) params.append("platform", filters.platform);
-  if (filters.page) params.append("page", filters.page.toString());
   
-  const response = await fetch(`/api/admin/products/suggestions?${params.toString()}`, {
+  const response = await fetch(`/api/mocks/admin/products?${params.toString()}`, {
     credentials: "include",
+    headers: {
+      "x-mock-token": token,
+    },
   });
 
   if (!response.ok) {
@@ -115,9 +116,13 @@ export function AdminProductsClient() {
 
   const convertMutation = useMutation({
     mutationFn: async ({ suggestionId, taskData }: { suggestionId: string; taskData: any }) => {
-      const response = await fetch(`/api/admin/products/suggestions/${suggestionId}/convert`, {
+      const token = getMockToken();
+      const response = await fetch(`/api/mocks/admin/products/${suggestionId}/convert`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "x-mock-token": token } : {}),
+        },
         body: JSON.stringify(taskData),
         credentials: "include",
       });
@@ -164,8 +169,8 @@ export function AdminProductsClient() {
     );
   }
 
-  const suggestions = data?.data || [];
-  const pagination = data?.pagination;
+  const suggestions = data?.products || [];
+  const stats = data?.stats;
 
   return (
     <div className="space-y-6">
@@ -233,7 +238,12 @@ export function AdminProductsClient() {
         <CardHeader>
           <CardTitle>Product Suggestions</CardTitle>
           <CardDescription>
-            {pagination ? `${pagination.total} total suggestions` : "Loading..."}
+            {data ? `${data.total} total suggestions` : "Loading..."}
+            {stats && (
+              <span className="ml-2 text-xs">
+                ({stats.pending} pending, {stats.approved} approved, {stats.rejected} rejected, {stats.converted} converted)
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -267,8 +277,8 @@ export function AdminProductsClient() {
                       <TableRow key={suggestion.id}>
                         <TableCell className="font-medium">
                           {suggestion.productName}
-                          {suggestion.category && (
-                            <div className="text-xs text-muted-foreground">{suggestion.category}</div>
+                          {suggestion.orderId && (
+                            <div className="text-xs text-muted-foreground">Order: {suggestion.orderId}</div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -276,15 +286,15 @@ export function AdminProductsClient() {
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            {suggestion.user.username || suggestion.user.email || suggestion.user.phone}
+                            User {suggestion.suggestedBy.slice(-4)}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {suggestion.amount ? `₹${suggestion.amount.toFixed(2)}` : "-"}
+                          ₹{suggestion.amount.toFixed(2)}
                         </TableCell>
                         <TableCell>{getStatusBadge(suggestion.status)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(suggestion.created_at).toLocaleDateString()}
+                          {new Date(suggestion.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           {suggestion.status === "pending" && (
@@ -302,32 +312,6 @@ export function AdminProductsClient() {
                 </Table>
               </div>
 
-              {/* Pagination */}
-              {pagination && pagination.total_pages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Page {pagination.page} of {pagination.total_pages}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={pagination.page === 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(pagination.total_pages, p + 1))}
-                      disabled={pagination.page === pagination.total_pages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </CardContent>

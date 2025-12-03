@@ -1,0 +1,55 @@
+{
+  "balance": 2450.75,
+  "coins": 12500,
+  "totalEarned": 8750.25,
+  "todayChange": 125.50,
+  "transactions": [
+    {
+      "id": "tx-1",
+      "type": "earned",
+      "amount": 25,
+      "description": "Task: Install GlowFit App",
+      "timestamp": "2024-08-22T10:15:00Z",
+      "status": "completed"
+    },
+    {
+      "id": "tx-2",
+      "type": "referral",
+      "amount": 50,
+      "description": "Referral bonus: Priya L.",
+      "timestamp": "2024-08-21T12:00:00Z",
+      "status": "completed"
+    },
+    {
+      "id": "tx-3",
+      "type": "withdrawal",
+      "amount": -500,
+      "description": "Withdrawal to UPI: aditir@upi",
+      "timestamp": "2024-08-20T09:00:00Z",
+      "status": "completed"
+    },
+    {
+      "id": "tx-4",
+      "type": "bonus",
+      "amount": 100,
+      "description": "Weekly bonus",
+      "timestamp": "2024-08-19T08:00:00Z",
+      "status": "completed"
+    },
+    {
+      "id": "tx-5",
+      "type": "earned",
+      "amount": 75,
+      "description": "Task: UPI Recharge - Navi",
+      "timestamp": "2024-08-18T14:30:00Z",
+      "status": "completed"
+    }
+  ],
+  "earningsByCategory": {
+    "tasks": 6200.50,
+    "referrals": 1850.25,
+    "bonuses": 450.00,
+    "withdrawn": 2500.00
+  }
+}
+

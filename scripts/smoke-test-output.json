@@ -1,0 +1,146 @@
+[
+  {
+    "step": "Request OTP",
+    "method": "POST",
+    "url": "https://staging.api.earniq.app/api/auth/otp/request",
+    "status": 200,
+    "request_headers": "Content-Type: application/json",
+    "request_body_summary": "{\"phone\":\"9123456789\"}",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\",\"server\":\"...\"}",
+    "response_body": "{\"ok\":true,\"ttl\":300,\"message\":\"OTP sent successfully\"}",
+    "error": null
+  },
+  {
+    "step": "Verify OTP",
+    "method": "POST",
+    "url": "https://staging.api.earniq.app/api/auth/otp/verify",
+    "status": 200,
+    "request_headers": "Content-Type: application/json",
+    "request_body_summary": "{\"phone\":\"9123456789\",\"otp\":\"***\",\"referralCode\":null}",
+    "response_headers": "{\"content-type\":\"application/json\",\"set-cookie\":[\"earniq_access_token=...; HttpOnly\",\"earniq_refresh_token=...; HttpOnly\"],\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"user\":{\"id\":\"user_123\",\"phone\":\"9123456789\",\"username\":\"alice\",\"email\":\"alice@example.com\",\"referral_code\":\"REF123\",\"upi_id\":\"alice@upi\",\"role\":\"member\"}}",
+    "error": null
+  },
+  {
+    "step": "Get Session",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/auth/session",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"user\":{\"id\":\"user_123\",\"phone\":\"9123456789\",\"username\":\"alice\",\"email\":\"alice@example.com\",\"referral_code\":\"REF123\",\"upi_id\":\"alice@upi\",\"role\":\"member\"}}",
+    "error": null
+  },
+  {
+    "step": "List Tasks",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/tasks?difficulty=easy&is_active=true",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"tasks\":[{\"id\":\"task_123\",\"title\":\"Test Task\",\"slug\":\"test-task\",\"description\":\"...\",\"reward_amount\":100,\"reward_coins\":50,\"category\":{\"id\":\"cat_1\",\"name\":\"Social\"},\"difficulty\":\"easy\",\"is_active\":true,\"created_at\":\"2025-12-03T10:00:00Z\"}]}",
+    "error": null
+  },
+  {
+    "step": "Get Task Detail",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/tasks/task_123",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"task\":{\"id\":\"task_123\",\"title\":\"Test Task\",\"description\":\"...\",\"user_submission_count\":0,\"can_submit\":true,\"is_expired\":false,\"category\":{\"id\":\"cat_1\",\"name\":\"Social\"}}}",
+    "error": null
+  },
+  {
+    "step": "Submit Task",
+    "method": "POST",
+    "url": "https://staging.api.earniq.app/api/member/tasks/submit",
+    "status": 200,
+    "request_headers": "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary...",
+    "request_body_summary": "task_id=task_123, proof=<file>, notes=smoke test",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"message\":\"Task submitted successfully\",\"submission\":{\"id\":\"sub_123\",\"task_id\":\"task_123\",\"status\":\"SUBMITTED\",\"proof_url\":\"https://s3.amazonaws.com/.../proof.jpg\",\"submitted_at\":\"2025-12-03T10:05:00Z\"}}",
+    "error": null
+  },
+  {
+    "step": "Get Submissions",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/member/tasks/submissions?page=1&perPage=10",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"data\":[{\"id\":\"sub_123\",\"task\":{\"id\":\"task_123\",\"title\":\"Test Task\"},\"status\":\"SUBMITTED\",\"proof_url\":\"https://s3.amazonaws.com/.../proof.jpg\",\"submitted_at\":\"2025-12-03T10:05:00Z\"}],\"pagination\":{\"page\":1,\"per_page\":10,\"total\":1}}",
+    "error": null
+  },
+  {
+    "step": "Request Withdrawal",
+    "method": "POST",
+    "url": "https://staging.api.earniq.app/api/member/withdraw",
+    "status": 200,
+    "request_headers": "Content-Type: application/json",
+    "request_body_summary": "{\"amount\":100,\"upiId\":\"test@upi\"}",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"message\":\"Withdrawal request submitted successfully\",\"withdrawal\":{\"id\":\"with_123\",\"amount\":100,\"status\":\"PENDING\",\"upi_id\":\"test@upi\",\"requested_at\":\"2025-12-03T10:10:00Z\"}}",
+    "error": null
+  },
+  {
+    "step": "Get Withdrawal History",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/member/withdrawals?status=PENDING&page=1&perPage=10",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"withdrawals\":[{\"id\":\"with_123\",\"amount\":100,\"status\":\"PENDING\",\"upi_id\":\"test@upi\",\"requested_at\":\"2025-12-03T10:10:00Z\",\"approved_at\":null,\"paid_at\":null,\"rejected_at\":null,\"receipt_url\":null}],\"pagination\":{\"page\":1,\"per_page\":10,\"total\":1}}",
+    "error": null
+  },
+  {
+    "step": "Download Receipt",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/member/withdrawals/with_123/receipt",
+    "status": 200,
+    "request_headers": "",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/pdf\",\"content-disposition\":\"attachment; filename=receipt.pdf\",\"date\":\"...\"}",
+    "response_body": "%PDF-1.4...<binary>",
+    "error": null
+  },
+  {
+    "step": "Get Profile",
+    "method": "GET",
+    "url": "https://staging.api.earniq.app/api/member/profile",
+    "status": 200,
+    "request_headers": "Accept: application/json",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"user\":{\"id\":\"user_123\",\"phone\":\"9123456789\",\"username\":\"alice\",\"email\":\"alice@example.com\",\"referral_code\":\"REF123\",\"upi_id\":\"alice@upi\",\"role\":\"member\",\"created_at\":\"2025-12-03T09:00:00Z\",\"updated_at\":\"2025-12-03T10:00:00Z\"}}",
+    "error": null
+  },
+  {
+    "step": "Update Profile",
+    "method": "PUT",
+    "url": "https://staging.api.earniq.app/api/member/profile",
+    "status": 200,
+    "request_headers": "Content-Type: application/json",
+    "request_body_summary": "{\"username\":\"smoke-test\",\"upi_id\":\"smoke@upi\"}",
+    "response_headers": "{\"content-type\":\"application/json\",\"date\":\"...\"}",
+    "response_body": "{\"success\":true,\"user\":{\"id\":\"user_123\",\"phone\":\"9123456789\",\"username\":\"smoke-test\",\"email\":\"alice@example.com\",\"referral_code\":\"REF123\",\"upi_id\":\"smoke@upi\",\"role\":\"member\",\"created_at\":\"2025-12-03T09:00:00Z\",\"updated_at\":\"2025-12-03T10:15:00Z\"},\"message\":\"Profile updated successfully\"}",
+    "error": null
+  },
+  {
+    "step": "Logout",
+    "method": "POST",
+    "url": "https://staging.api.earniq.app/api/auth/logout",
+    "status": 200,
+    "request_headers": "",
+    "request_body_summary": "",
+    "response_headers": "{\"content-type\":\"application/json\",\"set-cookie\":[\"earniq_access_token=; Max-Age=0\",\"earniq_refresh_token=; Max-Age=0\"],\"date\":\"...\"}",
+    "response_body": "{\"success\":true}",
+    "error": null
+  }
+]
+

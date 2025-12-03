@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { getMockToken } from "@/lib/auth";
 
 interface TaskSubmissionDialogProps {
   taskId: string;
@@ -62,17 +63,23 @@ export function TaskSubmissionDialog({ taskId, taskTitle, children, onSuccess }:
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("task_id", taskId);
-      formData.append("proof", proofFile);
-      if (notes.trim()) {
-        formData.append("notes", notes.trim());
-      }
+      // For mock, we'll use a simple URL instead of file upload
+      // In production, this would upload to S3 and return the URL
+      const proofUrl = proofFile ? `https://example.com/proof/${Date.now()}.jpg` : "";
 
-      const response = await fetch("/api/member/tasks/submit", {
+      const token = getMockToken();
+      const response = await fetch("/api/mocks/member/tasks/submit", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "x-mock-token": token } : {}),
+        },
         credentials: "include",
+        body: JSON.stringify({
+          taskId: taskId,
+          proofUrl: proofUrl || "https://example.com/proof.jpg", // Mock URL
+          notes: notes.trim() || null,
+        }),
       });
 
       const data = await response.json();

@@ -1,0 +1,31 @@
+{
+  "daily": [
+    { "rank": 1, "userId": "user-1", "name": "Aarav J.", "earnings": 720, "tasksCompleted": 5, "referrals": 2, "change": 0 },
+    { "rank": 2, "userId": "user-2", "name": "Meera S.", "earnings": 610, "tasksCompleted": 4, "referrals": 1, "change": 1 },
+    { "rank": 3, "userId": "user-3", "name": "Rohit K.", "earnings": 580, "tasksCompleted": 4, "referrals": 1, "change": -1 },
+    { "rank": 4, "userId": "user-4", "name": "You", "earnings": 450, "tasksCompleted": 3, "referrals": 1, "change": 0 },
+    { "rank": 5, "userId": "user-5", "name": "Priya L.", "earnings": 390, "tasksCompleted": 2, "referrals": 0, "change": 2 }
+  ],
+  "weekly": [
+    { "rank": 1, "userId": "user-1", "name": "Aarav J.", "earnings": 7200, "tasksCompleted": 45, "referrals": 15, "change": 0 },
+    { "rank": 2, "userId": "user-2", "name": "Meera S.", "earnings": 6100, "tasksCompleted": 38, "referrals": 12, "change": 1 },
+    { "rank": 3, "userId": "user-3", "name": "Rohit K.", "earnings": 5800, "tasksCompleted": 35, "referrals": 11, "change": -1 },
+    { "rank": 4, "userId": "user-4", "name": "You", "earnings": 4500, "tasksCompleted": 28, "referrals": 9, "change": 0 },
+    { "rank": 5, "userId": "user-5", "name": "Priya L.", "earnings": 3900, "tasksCompleted": 25, "referrals": 7, "change": 2 }
+  ],
+  "monthly": [
+    { "rank": 1, "userId": "user-1", "name": "Aarav J.", "earnings": 28000, "tasksCompleted": 180, "referrals": 60, "change": 0 },
+    { "rank": 2, "userId": "user-2", "name": "Meera S.", "earnings": 24500, "tasksCompleted": 150, "referrals": 48, "change": 1 },
+    { "rank": 3, "userId": "user-3", "name": "Rohit K.", "earnings": 23200, "tasksCompleted": 140, "referrals": 44, "change": -1 },
+    { "rank": 4, "userId": "user-4", "name": "You", "earnings": 18000, "tasksCompleted": 112, "referrals": 36, "change": 0 },
+    { "rank": 5, "userId": "user-5", "name": "Priya L.", "earnings": 15600, "tasksCompleted": 100, "referrals": 28, "change": 2 }
+  ],
+  "all-time": [
+    { "rank": 1, "userId": "user-1", "name": "Aarav J.", "earnings": 125000, "tasksCompleted": 750, "referrals": 250, "change": 0 },
+    { "rank": 2, "userId": "user-2", "name": "Meera S.", "earnings": 108000, "tasksCompleted": 650, "referrals": 200, "change": 1 },
+    { "rank": 3, "userId": "user-3", "name": "Rohit K.", "earnings": 98000, "tasksCompleted": 580, "referrals": 180, "change": -1 },
+    { "rank": 4, "userId": "user-4", "name": "You", "earnings": 87500, "tasksCompleted": 520, "referrals": 150, "change": 0 },
+    { "rank": 5, "userId": "user-5", "name": "Priya L.", "earnings": 72000, "tasksCompleted": 420, "referrals": 120, "change": 2 }
+  ]
+}
+

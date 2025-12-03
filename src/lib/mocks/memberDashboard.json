@@ -1,0 +1,31 @@
+{
+  "wallet": {
+    "balance": 2450.75,
+    "coins": 12500,
+    "todayChange": 125.50,
+    "totalEarned": 8750.25
+  },
+  "tasks": {
+    "pending": 3,
+    "approved": 28,
+    "rejected": 2,
+    "total": 33
+  },
+  "referrals": {
+    "total": 12,
+    "verified": 8,
+    "pending": 4,
+    "earnings": 450.00
+  },
+  "level": {
+    "current": 5,
+    "name": "Pro",
+    "xp": 1250,
+    "nextLevelXP": 2000
+  },
+  "streak": {
+    "days": 7,
+    "longest": 12
+  }
+}
+

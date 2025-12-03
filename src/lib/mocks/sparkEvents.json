@@ -1,0 +1,57 @@
+[
+  {
+    "id": "spark-1",
+    "type": "task_completed",
+    "message": "Priya completed 'Install GlowFit App' and earned ₹25!",
+    "userId": "user-1",
+    "userName": "Priya L.",
+    "timestamp": "2024-08-22T10:15:00Z",
+    "isApproved": true
+  },
+  {
+    "id": "spark-2",
+    "type": "referral",
+    "message": "Aarav referred 3 friends and earned ₹150!",
+    "userId": "user-2",
+    "userName": "Aarav J.",
+    "timestamp": "2024-08-22T09:30:00Z",
+    "isApproved": true
+  },
+  {
+    "id": "spark-3",
+    "type": "withdrawal",
+    "message": "Meera withdrew ₹1000 successfully!",
+    "userId": "user-3",
+    "userName": "Meera S.",
+    "timestamp": "2024-08-22T08:00:00Z",
+    "isApproved": true
+  },
+  {
+    "id": "spark-4",
+    "type": "level_up",
+    "message": "Rohit reached Elite level!",
+    "userId": "user-4",
+    "userName": "Rohit K.",
+    "timestamp": "2024-08-21T20:00:00Z",
+    "isApproved": true
+  },
+  {
+    "id": "spark-5",
+    "type": "achievement",
+    "message": "Priya unlocked 'Referral Master' achievement!",
+    "userId": "user-1",
+    "userName": "Priya L.",
+    "timestamp": "2024-08-21T18:00:00Z",
+    "isApproved": false
+  },
+  {
+    "id": "spark-6",
+    "type": "task_completed",
+    "message": "Aarav completed 'UPI Recharge' and earned ₹75!",
+    "userId": "user-2",
+    "userName": "Aarav J.",
+    "timestamp": "2024-08-21T15:00:00Z",
+    "isApproved": false
+  }
+]
+

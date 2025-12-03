@@ -9,7 +9,7 @@ if (!fs.existsSync(envPath)) {
 }
 
 let envContent = fs.readFileSync(envPath, 'utf8');
-const jwtSecret = envContent.match(/JWT_SECRET=(.+)/)?.[1] || 'sparkio-jwt-secret-key-32-characters-long';
+const jwtSecret = envContent.match(/JWT_SECRET=(.+)/)?.[1] || 'earniq-jwt-secret-key-32-characters-long';
 
 // Check if JWT_ACCESS_TOKEN_SECRET already exists
 if (!envContent.includes('JWT_ACCESS_TOKEN_SECRET=')) {
