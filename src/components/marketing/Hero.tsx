@@ -44,23 +44,23 @@ export function Hero() {
 
           <motion.div className="space-y-5" variants={fadeInUp}>
             <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Make every install, task, and share count toward real cash
+              Turn clicks into cash — <span className="text-primary">earn rewards</span> for every action
             </h1>
             <p className="text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Earniq turns referrals, UPI tasks, and micro-actions into a transparent wallet with no hidden fees, instant
-              OTP login, and UPI cash-outs you can trust.
+              Complete tasks, refer friends, and watch your wallet grow. Zero hidden fees, instant UPI withdrawals, 
+              and a dashboard that shows exactly where every rupee comes from.
             </p>
           </motion.div>
 
           <motion.div className="flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start" variants={fadeInUp}>
-            <Button asChild size="lg" className="text-base">
-              <Link href="/login">
-                Launch dashboard
+            <Button asChild size="lg" className="text-base bg-primary hover:bg-primary/90">
+              <Link href="/register">
+                Start earning now
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="text-base">
-              <Link href="/register">Create free account</Link>
+            <Button asChild size="lg" variant="outline" className="text-base border-primary/30 hover:bg-primary/10">
+              <Link href="/login">Sign in to dashboard</Link>
             </Button>
           </motion.div>
 
