@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from './jwt';
 import { prisma } from './prisma';
-import { Role } from '@prisma/client';
+import type { Role } from './types';
 
 export interface AuthUser {
   id: string;

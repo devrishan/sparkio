@@ -2,8 +2,10 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role, WithdrawalStatus, NotificationType } from '@prisma/client';
+import type { Role, WithdrawalStatus, NotificationType } from '@/lib/types';
 import { processPayout } from '@/lib/payouts';
+
+const Role = { ADMIN: 'ADMIN', PAYOUT_MANAGER: 'PAYOUT_MANAGER' } as const;
 
 export async function PUT(request: NextRequest) {
   try {
@@ -104,7 +106,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Process withdrawal
-    const updatedWithdrawal = await prisma.$transaction(async (tx) => {
+    const updatedWithdrawal = await prisma.$transaction(async (tx: any) => {
       // Update withdrawal status
       const updated = await tx.withdrawal.update({
         where: { id: withdrawal_id },
@@ -166,7 +168,7 @@ export async function PUT(request: NextRequest) {
       await tx.notification.create({
         data: {
           userId: withdrawal.userId,
-          type: NotificationType.WITHDRAWAL_UPDATE,
+          type: 'WITHDRAWAL_UPDATE' as const,
           title: notificationTitle,
           body: notificationBody,
           data: {

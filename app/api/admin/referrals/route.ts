@@ -2,7 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import type { Role } from '@/lib/types';
+
+interface ReferralWithUsers {
+  id: string;
+  level: number;
+  status: string;
+  commissionAmount: { toNumber?: () => number } | number;
+  createdAt: Date;
+  updatedAt: Date;
+  referrer: {
+    username: string | null;
+    email: string | null;
+    phone: string;
+  };
+  referredUser: {
+    username: string | null;
+    email: string | null;
+    phone: string;
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +41,7 @@ export async function GET(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins can access
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -78,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: referrals.map((referral) => ({
+      data: referrals.map((referral: ReferralWithUsers) => ({
         id: referral.id,
         referrer: {
           username: referral.referrer.username,

@@ -11,7 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import type { MemberReferral } from "@/services/member";
 
-const statusColor: Record<MemberReferral["status"], string> = {
+type ReferralStatus = "verified" | "pending" | "rejected";
+
+const statusColor: Record<ReferralStatus, string> = {
   verified: "bg-success/10 text-success",
   pending: "bg-primary/10 text-primary",
   rejected: "bg-destructive/10 text-destructive",
@@ -19,13 +21,15 @@ const statusColor: Record<MemberReferral["status"], string> = {
 
 export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[] }) {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<MemberReferral["status"] | "all">("all");
+  const [status, setStatus] = useState<ReferralStatus | "all">("all");
 
   const filteredReferrals = useMemo(() => {
     return referrals.filter((referral) => {
+      const username = referral.referred_user?.username || referral.referred_user?.phone || "";
+      const email = referral.referred_user?.email || "";
       const matchesSearch =
-        referral.username.toLowerCase().includes(search.toLowerCase()) ||
-        referral.email.toLowerCase().includes(search.toLowerCase());
+        username.toLowerCase().includes(search.toLowerCase()) ||
+        email.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = status === "all" ? true : referral.status === status;
       return matchesSearch && matchesStatus;
     });
@@ -60,7 +64,7 @@ export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[
                 variant={status === value ? "default" : "outline"}
                 size="sm"
                 className={
-                  value !== "all" && status === value ? statusColor[value as MemberReferral["status"]] : undefined
+                  value !== "all" && status === value ? statusColor[value as ReferralStatus] : undefined
                 }
                 onClick={() => setStatus(value)}
               >
@@ -91,10 +95,10 @@ export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[
           ) : (
             filteredReferrals.map((referral) => (
               <TableRow key={referral.id}>
-                <TableCell className="font-medium">{referral.username}</TableCell>
-                <TableCell className="text-muted-foreground">{referral.email}</TableCell>
+                <TableCell className="font-medium">{referral.referred_user?.username || referral.referred_user?.phone || "-"}</TableCell>
+                <TableCell className="text-muted-foreground">{referral.referred_user?.email || "-"}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusColor[referral.status]}>
+                  <Badge variant="outline" className={statusColor[referral.status as ReferralStatus] || ""}>
                     {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
                   </Badge>
                 </TableCell>
@@ -110,4 +114,3 @@ export function MemberReferralsTable({ referrals }: { referrals: MemberReferral[
     </Card>
   );
 }
-

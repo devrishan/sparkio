@@ -2,7 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import type { Role } from '@/lib/types';
+
+interface ProductSuggestion {
+  id: string;
+  productName: string;
+  platform: string;
+  category: string | null;
+  amount: { toNumber?: () => number } | number | null;
+  orderId: string | null;
+  files: string[];
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    id: string;
+    phone: string;
+    username: string | null;
+    email: string | null;
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +41,7 @@ export async function GET(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins and product managers can access
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -87,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: suggestions.map((suggestion) => ({
+      data: suggestions.map((suggestion: ProductSuggestion) => ({
         id: suggestion.id,
         productName: suggestion.productName,
         platform: suggestion.platform,

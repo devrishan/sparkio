@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Role } from '@prisma/client';
+import type { Role } from '@/lib/types';
 
 import { verifyOtp } from '@/lib/otp-provider';
 import { prisma } from '@/lib/prisma';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
+
+const RoleValue = { USER: 'USER' } as const;
 
 const verifySchema = z.object({
   phone: z.string(),
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       user = await prisma.user.create({
         data: {
           phone,
-          role: Role.USER,
+          role: 'USER' as const,
           referralCode: generatedReferralCode,
           referredById,
           wallet: {

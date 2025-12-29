@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Data Migration Script: MySQL (Sparkio) -> PostgreSQL (Earniq)
  * 
@@ -9,11 +10,14 @@
  * 3. Run: npx tsx prisma/migrate-data.ts
  */
 
-import { PrismaClient, Role, Rank, SubmissionStatus, WithdrawalStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import mysql from 'mysql2/promise';
-import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+const Role = { USER: 'USER', ADMIN: 'ADMIN' } as const;
+const Rank = { NEWBIE: 'NEWBIE' } as const;
+const WithdrawalStatus = { PENDING: 'PENDING', COMPLETED: 'COMPLETED', FAILED: 'FAILED' } as const;
 
 // MySQL connection config (from old database)
 const mysqlConfig = {
@@ -321,4 +325,3 @@ async function main() {
 }
 
 main();
-

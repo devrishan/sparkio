@@ -2,7 +2,9 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role, SubmissionStatus } from '@prisma/client';
+import type { Role, SubmissionStatus } from '@/lib/types';
+
+const Role = { ADMIN: 'ADMIN', VERIFIER: 'VERIFIER' } as const;
 
 export async function PUT(request: NextRequest) {
   try {
@@ -89,7 +91,7 @@ export async function PUT(request: NextRequest) {
 
     // If approved, credit wallet and update gamification
     if (new_status === 'APPROVED' && submission.status !== 'APPROVED') {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Credit wallet
         if (submission.user.wallet) {
           const rewardAmount = Number(submission.task.rewardAmount);
