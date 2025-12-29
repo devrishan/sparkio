@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { Role } from "@prisma/client";
 import { z } from "zod";
 
 import { verifyAccessToken } from "@/lib/jwt";
@@ -22,7 +21,7 @@ async function ensureAdmin() {
 
   try {
     const payload = verifyAccessToken(accessToken);
-    if (payload.role !== Role.ADMIN) {
+    if (payload.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
     return null;

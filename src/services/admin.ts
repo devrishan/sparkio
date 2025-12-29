@@ -158,3 +158,66 @@ export async function getAdminSubmissions(status?: string): Promise<AdminSubmiss
     redirect("/login");
   }
 }
+
+// Task submission interface for new API
+export interface TaskSubmission {
+  id: string;
+  status: "SUBMITTED" | "REVIEWING" | "APPROVED" | "REJECTED" | "DELETED";
+  proof_url: string;
+  proof_type: string | null;
+  notes: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  user: {
+    id: string;
+    username: string | null;
+    email: string | null;
+  };
+  task: {
+    id: string;
+    title: string;
+    reward_amount: number;
+    reward_coins: number;
+  };
+  reviewer: {
+    id: string;
+    username: string | null;
+  } | null;
+}
+
+interface TaskSubmissionsPagination {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+}
+
+export async function getTaskSubmissions(params: {
+  status?: string;
+  page?: number;
+  per_page?: number;
+}): Promise<{ data: TaskSubmission[]; pagination: TaskSubmissionsPagination }> {
+  try {
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.page) query.set("page", String(params.page));
+    if (params.per_page) query.set("per_page", String(params.per_page));
+
+    const queryString = query.toString();
+    const path = `/api/admin/tasks/submissions${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(path);
+    const data = await response.json();
+
+    if (!data.success) {
+      redirect("/login");
+    }
+
+    return {
+      data: data.submissions || [],
+      pagination: data.pagination || { page: 1, per_page: 20, total: 0, total_pages: 0 },
+    };
+  } catch {
+    redirect("/login");
+  }
+}

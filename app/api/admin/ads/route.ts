@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins can access
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      ads: ads.map((ad) => ({
+      ads: ads.map((ad: any) => ({
         id: ad.id,
         name: ad.name,
         ad_placement_id: ad.adPlacementId,
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins can create ads
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },

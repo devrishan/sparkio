@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
-import { Role } from '@prisma/client';
 import { setFeatureFlag, deleteFeatureFlag, getFeatureFlag } from '@/lib/feature-flags';
 import { z } from 'zod';
 
@@ -33,7 +32,7 @@ export async function GET(
       userRole = payload.role;
 
       // Only admins can access
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -89,7 +88,7 @@ export async function PUT(
       userRole = payload.role;
 
       // Only admins can update flags
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -161,7 +160,7 @@ export async function DELETE(
       userRole = payload.role;
 
       // Only admins can delete flags
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
