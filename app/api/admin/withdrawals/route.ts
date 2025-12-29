@@ -2,7 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role, WithdrawalStatus } from '@prisma/client';
+import type { Role, WithdrawalStatus } from '@/lib/types';
+
+const Role = { ADMIN: 'ADMIN', PAYOUT_MANAGER: 'PAYOUT_MANAGER' } as const;
+
+interface WithdrawalWithUser {
+  id: string;
+  amount: { toNumber?: () => number } | number;
+  status: string;
+  upiId: string;
+  upiQrUrl: string | null;
+  requestedAt: Date;
+  processedAt: Date | null;
+  txId: string | null;
+  receiptUrl: string | null;
+  notes: string | null;
+  user: {
+    username: string | null;
+    email: string | null;
+    phone: string;
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      withdrawals: withdrawals.map((withdrawal) => ({
+      withdrawals: withdrawals.map((withdrawal: WithdrawalWithUser) => ({
         id: withdrawal.id,
         amount: Number(withdrawal.amount),
         status: withdrawal.status,

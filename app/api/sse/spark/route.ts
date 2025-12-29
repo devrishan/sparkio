@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       try {
         const recentEvents = await getRecentSparkEvents(20, true); // publicOnly = true
         for (const event of recentEvents) {
-          send(`data: ${JSON.stringify({ type: 'event', ...event })}\n\n`);
+          send(`data: ${JSON.stringify({ eventType: 'event', ...event })}\n\n`);
         }
       } catch (error) {
         console.error('Error sending initial events:', error);

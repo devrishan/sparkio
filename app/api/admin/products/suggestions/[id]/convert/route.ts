@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import type { Role } from '@/lib/types';
 import { z } from 'zod';
 
 const convertSchema = z.object({
@@ -39,7 +39,7 @@ export async function POST(
       userRole = payload.role;
 
       // Only admins can convert
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -85,7 +85,7 @@ export async function POST(
     const finalSlug = existingTask ? `${slug}-${Date.now()}` : slug;
 
     // Create task from suggestion
-    const task = await prisma.$transaction(async (tx) => {
+    const task = await prisma.$transaction(async (tx: any) => {
       // Create task
       const newTask = await tx.task.create({
         data: {

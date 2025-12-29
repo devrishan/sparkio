@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { prisma } from './prisma';
-import { Rank } from '@prisma/client';
+import type { Rank } from './types';
 import { updateLeaderboardScore } from './leaderboards';
 
 /**

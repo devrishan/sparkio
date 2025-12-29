@@ -51,9 +51,17 @@ export async function GET(request: NextRequest) {
       prisma.walletTransaction.count({ where }),
     ]);
 
+    interface WalletTx {
+      id: string;
+      amount: { toNumber?: () => number } | number;
+      type: string;
+      metadata: Record<string, any> | null;
+      createdAt: Date;
+    }
+
     return NextResponse.json({
       success: true,
-      transactions: transactions.map((tx) => ({
+      transactions: transactions.map((tx: WalletTx) => ({
         id: tx.id,
         amount: Number(tx.amount),
         type: tx.type,

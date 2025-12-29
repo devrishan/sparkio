@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create withdrawal request
-    const withdrawal = await prisma.$transaction(async (tx) => {
+    const withdrawal = await prisma.$transaction(async (tx: any) => {
       // Lock wallet for update
       const lockedWallet = await tx.wallet.findUnique({
         where: { userId },

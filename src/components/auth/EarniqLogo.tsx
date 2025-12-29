@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 
 interface EarniqLogoProps {
   href?: string;
@@ -9,7 +10,7 @@ interface EarniqLogoProps {
 
 export function EarniqLogo({ href = "/", className }: EarniqLogoProps) {
   return (
-    <Link href={href} className={`inline-flex items-center gap-2 ${className || ""}`} aria-label="Earniq home">
+    <Link href={href as Route} className={`inline-flex items-center gap-2 ${className || ""}`} aria-label="Earniq home">
       <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-lg font-semibold text-primary transition hover:bg-primary/30">
         ✦
       </span>

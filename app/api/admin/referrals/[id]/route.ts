@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import type { Role } from '@/lib/types';
 import { creditMultiLevelCommissions } from '@/lib/referrals';
 import { z } from 'zod';
 
@@ -34,7 +34,7 @@ export async function PUT(
       userRole = payload.role;
 
       // Only admins can approve/reject
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -90,7 +90,7 @@ export async function PUT(
       }
 
       // Update referral and credit wallet
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Update referral
         await tx.referral.update({
           where: { id: referralId },

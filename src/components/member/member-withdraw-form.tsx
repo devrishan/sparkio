@@ -20,7 +20,7 @@ const schema = z.object({
   upi_id: z.string().min(5, "Enter a valid UPI ID."),
 });
 
-type WithdrawFormValues = z.infer<typeof schema>;
+type WithdrawFormValues = z.output<typeof schema>;
 
 interface MemberWithdrawFormProps {
   balance: number;
@@ -29,7 +29,7 @@ interface MemberWithdrawFormProps {
 export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
   const router = useRouter();
 
-  const form = useForm<WithdrawFormValues>({
+  const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       amount: "",
@@ -75,9 +75,9 @@ export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
+        <form onSubmit={form.handleSubmit((values: any) => mutation.mutate(values))} className="space-y-4">
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="amount"
             render={({ field }) => (
               <FormItem>
@@ -90,7 +90,7 @@ export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="upi_id"
             render={({ field }) => (
               <FormItem>
@@ -110,4 +110,3 @@ export function MemberWithdrawForm({ balance }: MemberWithdrawFormProps) {
     </div>
   );
 }
-

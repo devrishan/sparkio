@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update withdrawal status
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         const newStatus = status === 'processed' ? 'COMPLETED' : 'FAILED';
 
         await tx.withdrawal.update({
@@ -226,7 +226,7 @@ export async function PUT(request: NextRequest) {
     const newStatus =
       status === 'SUCCESS' ? 'COMPLETED' : status === 'FAILED' ? 'FAILED' : 'PROCESSING';
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.withdrawal.update({
         where: { id: withdrawal.id },
         data: {

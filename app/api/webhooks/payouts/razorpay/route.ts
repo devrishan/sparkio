@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         newStatus = 'FAILED';
       }
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         await tx.withdrawal.update({
           where: { id: withdrawalId },
           data: {
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         await tx.notification.create({
           data: {
             userId: withdrawal.userId,
-            type: NotificationType.WITHDRAWAL_UPDATE,
+            type: 'WITHDRAWAL_UPDATE' as const,
             title: 'Withdrawal Update',
             body:
               newStatus === 'COMPLETED'

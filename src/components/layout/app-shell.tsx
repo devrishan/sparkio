@@ -7,13 +7,13 @@ import { SparkioLogo } from "@/components/shared/logo";
 import { useSession } from "@/components/providers/session-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import type { NavigationItem } from "@/config/navigation";
 
-import type { SidebarItem } from "../navigation/sidebar";
 import { Sidebar } from "../navigation/sidebar";
 import { UserMenu } from "../navigation/user-menu";
 
 interface AppShellProps {
-  sidebarItems: SidebarItem[];
+  sidebarItems: NavigationItem[];
   children: React.ReactNode;
   fallbackRole?: "member" | "admin";
 }
