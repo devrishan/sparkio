@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
-import { Role } from '@prisma/client';
 import {
   getAllFeatureFlags,
   setFeatureFlag,
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins can access
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins can create flags
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },

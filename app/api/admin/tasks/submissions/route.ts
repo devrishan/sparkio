@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role, SubmissionStatus } from '@prisma/client';
+
+// Define types locally to avoid Prisma generation issues
+type Role = 'USER' | 'ADMIN' | 'VERIFIER' | 'PAYOUT_MANAGER';
+type SubmissionStatus = 'SUBMITTED' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'DELETED';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
       userRole = payload.role;
 
       // Only admins and verifiers can access
-      if (userRole !== Role.ADMIN && userRole !== Role.VERIFIER) {
+      if (userRole !== 'ADMIN' && userRole !== 'VERIFIER') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -99,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: submissions.map((submission) => ({
+      submissions: submissions.map((submission: any) => ({
         id: submission.id,
         task: {
           id: submission.task.id,

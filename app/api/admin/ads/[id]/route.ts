@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
 import { z } from 'zod';
 
 export async function PUT(
@@ -25,7 +24,7 @@ export async function PUT(
       const payload = verifyAccessToken(accessToken);
       userRole = payload.role;
 
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
@@ -92,7 +91,7 @@ export async function DELETE(
       const payload = verifyAccessToken(accessToken);
       userRole = payload.role;
 
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },

@@ -193,3 +193,16 @@ export async function invalidateTopSuggestionsCache(): Promise<void> {
     console.warn('Error invalidating cache:', error);
   }
 }
+
+/**
+ * Feature/unfeature a product suggestion
+ */
+export async function featureSuggestion(suggestionId: string, featured: boolean): Promise<void> {
+  await prisma.productSuggestion.update({
+    where: { id: suggestionId },
+    data: { isFeatured: featured },
+  });
+  
+  // Invalidate cache when featuring
+  await invalidateTopSuggestionsCache();
+}

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
 import { featureSuggestion } from '@/lib/top-suggestions';
 import { z } from 'zod';
 
@@ -31,7 +30,7 @@ export async function PUT(
       userRole = payload.role;
 
       // Only admins can feature suggestions
-      if (userRole !== Role.ADMIN) {
+      if (userRole !== 'ADMIN') {
         return NextResponse.json(
           { success: false, error: 'Forbidden' },
           { status: 403 },
